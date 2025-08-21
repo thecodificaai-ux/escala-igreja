@@ -8,39 +8,29 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #4a4a4a; }
-    
-    /* **A CORREÇÃO ESTÁ AQUI** */
-    .filters-container { 
-      display: flex; 
-      gap: 20px; 
-      justify-content: center; 
-      align-items: flex-start;
-      margin-bottom: 20px; 
-      padding: 15px; 
-      background-color: #fff; 
-      border-radius: 8px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1 );
-      position: relative; /* Necessário para o z-index funcionar corretamente */
-      z-index: 20; /* Prioridade alta para o container dos filtros */
-    }
-
-    .filter-group { display: flex; flex-direction: column; }
+    .filters-container { display: flex; gap: 20px; justify-content: center; align-items: flex-start; margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1 ); position: relative; z-index: 20; }
+    .filter-group { display: flex; flex-direction: column; position: relative; }
     .filter-group label { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #555; }
     .choices { min-width: 280px; }
     
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background-color: #fff; }
-    th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: top; }
-    
-    thead th { 
-      background-color: rgba(76, 175, 80, 0.95); 
-      color: white; 
-      font-weight: bold; 
-      text-transform: uppercase; 
-      position: sticky; 
-      top: 0; 
-      z-index: 10; /* Prioridade menor que a dos filtros */
+    /* **ATUALIZAÇÃO DE CSS 1: Estilo para o botão de limpar** */
+    .clear-filter {
+      position: absolute;
+      top: 35px; /* Ajuste conforme necessário */
+      right: 30px;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: bold;
+      color: #aaa;
+      z-index: 5; /* Garante que fique acima do input mas abaixo do dropdown */
+    }
+    .clear-filter:hover {
+      color: #555;
     }
 
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background-color: #fff; }
+    th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: top; }
+    thead th { background-color: rgba(76, 175, 80, 0.95); color: white; font-weight: bold; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
     .date-cell { font-weight: bold; white-space: nowrap; }
     .volunteer-list { margin: 0; padding: 0; list-style: none; }
     .volunteer-item { display: flex; align-items: center; margin-bottom: 5px; }
@@ -69,13 +59,13 @@
         
         for (const row of tableBody.rows) {
             let showRow = true;
-            if (ministryFilter !== 'all') {
+            if (ministryFilter && ministryFilter !== 'all') {
                 const ministryCell = row.cells[ministries.indexOf(ministryFilter) + 1];
                 if (!ministryCell || ministryCell.innerText.trim() === '') {
                     showRow = false;
                 }
             }
-            if (volunteerFilter !== 'all') {
+            if (volunteerFilter && volunteerFilter !== 'all') {
                 const isVolunteerInRow = Array.from(row.getElementsByClassName('volunteer-name')).some(el => el.getAttribute('data-member-name') === volunteerFilter);
                 if (!isVolunteerInRow) {
                     showRow = false;
@@ -83,6 +73,17 @@
             }
             row.style.display = showRow ? '' : 'none';
         }
+    }
+
+    // **ATUALIZAÇÃO DE JAVASCRIPT 1: Função para limpar um filtro específico**
+    function clearFilter(filterName) {
+      if (filterName === 'ministry') {
+        // O primeiro item da lista é 'all' (Todos)
+        ministryChoiceInstance.setChoiceByValue('all');
+      } else if (filterName === 'volunteer') {
+        volunteerChoiceInstance.setChoiceByValue('all');
+      }
+      // applyFilters() é chamado automaticamente pelo evento 'change'
     }
     
     document.addEventListener('DOMContentLoaded', function() {
@@ -115,6 +116,7 @@
         <option value="all">Todos os Ministérios</option>
         <option value="Mídia">Mídia</option>
       </select>
+      <span class="clear-filter" onclick="clearFilter('ministry')">&times;</span>
     </div>
     <div class="filter-group">
       <label for="volunteer-filter">Filtrar por Voluntário:</label>
@@ -122,6 +124,7 @@
         <option value="all">Todos os Voluntários</option>
         <option value="Agda Moreira">Agda Moreira</option><option value="Amanda Nunes">Amanda Nunes</option><option value="Ana Durli">Ana Durli</option><option value="Andre Almeida">Andre Almeida</option><option value="Ayrton Sena">Ayrton Sena</option><option value="Ayrton Verçosa">Ayrton Verçosa</option><option value="Bianca Andrade">Bianca Andrade</option><option value="Emily Garcia">Emily Garcia</option><option value="Emy Winehouse">Emy Winehouse</option><option value="Ester Ramos">Ester Ramos</option><option value="Fernanda Torres">Fernanda Torres</option><option value="Gihh Santos">Gihh Santos</option><option value="Iasmim Flores">Iasmim Flores</option><option value="John Lennon">John Lennon</option><option value="Koler Max">Koler Max</option><option value="Marcy Teixeira">Marcy Teixeira</option><option value="Matheus Lopes">Matheus Lopes</option><option value="Patrick Cunha">Patrick Cunha</option><option value="Rafael Portugal">Rafael Portugal</option><option value="Tai Campos">Tai Campos</option><option value="Thaine Matos">Thaine Matos</option><option value="Thais Fernandes">Thais Fernandes</option><option value="Thatila Carvalho">Thatila Carvalho</option><option value="Thays Carros">Thays Carros</option><option value="Tom Jobim">Tom Jobim</option>
       </select>
+      <span class="clear-filter" onclick="clearFilter('volunteer')">&times;</span>
     </div>
   </div>
 
