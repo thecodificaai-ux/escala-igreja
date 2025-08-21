@@ -8,20 +8,39 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #4a4a4a; }
-    .filters-container { display: flex; gap: 20px; justify-content: center; align-items: flex-start; margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1 ); }
+    
+    /* **A CORREÇÃO ESTÁ AQUI** */
+    .filters-container { 
+      display: flex; 
+      gap: 20px; 
+      justify-content: center; 
+      align-items: flex-start;
+      margin-bottom: 20px; 
+      padding: 15px; 
+      background-color: #fff; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1 );
+      position: relative; /* Necessário para o z-index funcionar corretamente */
+      z-index: 20; /* Prioridade alta para o container dos filtros */
+    }
+
     .filter-group { display: flex; flex-direction: column; }
     .filter-group label { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #555; }
     .choices { min-width: 280px; }
     
-    /* **A CORREÇÃO ESTÁ AQUI** */
-    /* Garante que o dropdown do Choices.js apareça sobre todos os outros elementos */
-    .choices__list--dropdown {
-      z-index: 20;
-    }
-
     table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background-color: #fff; }
     th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: top; }
-    thead th { background-color: rgba(76, 175, 80, 0.95); color: white; font-weight: bold; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
+    
+    thead th { 
+      background-color: rgba(76, 175, 80, 0.95); 
+      color: white; 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      position: sticky; 
+      top: 0; 
+      z-index: 10; /* Prioridade menor que a dos filtros */
+    }
+
     .date-cell { font-weight: bold; white-space: nowrap; }
     .volunteer-list { margin: 0; padding: 0; list-style: none; }
     .volunteer-item { display: flex; align-items: center; margin-bottom: 5px; }
