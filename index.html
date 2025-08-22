@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* **ATUALIZAÇÃO DE DESIGN: CSS Moderno inspirado no layout proposto** */
     :root {
         --primary-color: #4f46e5;
         --secondary-color: #f3f4f6;
@@ -35,6 +34,7 @@
         margin-bottom: 2rem;
     }
 
+    /* **ATUALIZAÇÃO DE CSS: Correção do z-index** */
     .filters-container {
         display: flex;
         flex-wrap: wrap;
@@ -45,6 +45,8 @@
         background: var(--background);
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
+        position: relative; /* Cria um contexto de empilhamento */
+        z-index: 20;       /* Garante que os filtros e seus dropdowns fiquem acima da tabela */
     }
 
     .filter-group {
@@ -107,7 +109,7 @@
         letter-spacing: 0.5px;
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: 10; /* z-index da tabela é menor que o dos filtros */
         font-size: 0.85rem;
     }
     thead th:first-child { border-top-left-radius: var(--radius); }
