@@ -34,7 +34,6 @@
         margin-bottom: 2rem;
     }
 
-    /* **ATUALIZAÇÃO DE CSS: Correção do z-index** */
     .filters-container {
         display: flex;
         flex-wrap: wrap;
@@ -45,8 +44,8 @@
         background: var(--background);
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
-        position: relative; /* Cria um contexto de empilhamento */
-        z-index: 20;       /* Garante que os filtros e seus dropdowns fiquem acima da tabela */
+        position: relative; 
+        z-index: 20;       
     }
 
     .filter-group {
@@ -109,7 +108,7 @@
         letter-spacing: 0.5px;
         position: sticky;
         top: 0;
-        z-index: 10; /* z-index da tabela é menor que o dos filtros */
+        z-index: 10; 
         font-size: 0.85rem;
     }
     thead th:first-child { border-top-left-radius: var(--radius); }
@@ -173,12 +172,13 @@
         border-color: #fbbF24 !important;
     }
 
+    /* **ATUALIZAÇÃO DE CSS: Correção da posição do tooltip** */
     .tooltip {
         visibility: hidden;
         position: absolute;
-        bottom: 125%;
-        left: 50%;
-        transform: translateX(-50%);
+        top: 50%; /* Alinha ao meio verticalmente */
+        left: 105%; /* Posiciona à direita do elemento */
+        transform: translateY(-50%); /* Centraliza verticalmente */
         background: #111827;
         color: white;
         padding: 0.5rem 0.75rem;
