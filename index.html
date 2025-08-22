@@ -12,22 +12,8 @@
     .filter-group { display: flex; flex-direction: column; position: relative; }
     .filter-group label { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #555; }
     .choices { min-width: 280px; }
-    
-    /* **ATUALIZAÇÃO DE CSS 1: Estilo para o botão de limpar** */
-    .clear-filter {
-      position: absolute;
-      top: 35px; /* Ajuste conforme necessário */
-      right: 30px;
-      cursor: pointer;
-      font-size: 20px;
-      font-weight: bold;
-      color: #aaa;
-      z-index: 5; /* Garante que fique acima do input mas abaixo do dropdown */
-    }
-    .clear-filter:hover {
-      color: #555;
-    }
-
+    .clear-filter { position: absolute; top: 35px; right: 30px; cursor: pointer; font-size: 20px; font-weight: bold; color: #aaa; z-index: 5; }
+    .clear-filter:hover { color: #555; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background-color: #fff; }
     th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: top; }
     thead th { background-color: rgba(76, 175, 80, 0.95); color: white; font-weight: bold; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
@@ -59,12 +45,14 @@
         
         for (const row of tableBody.rows) {
             let showRow = true;
+            // Lógica de filtro para Ministério
             if (ministryFilter && ministryFilter !== 'all') {
                 const ministryCell = row.cells[ministries.indexOf(ministryFilter) + 1];
                 if (!ministryCell || ministryCell.innerText.trim() === '') {
                     showRow = false;
                 }
             }
+            // Lógica de filtro para Voluntário
             if (volunteerFilter && volunteerFilter !== 'all') {
                 const isVolunteerInRow = Array.from(row.getElementsByClassName('volunteer-name')).some(el => el.getAttribute('data-member-name') === volunteerFilter);
                 if (!isVolunteerInRow) {
@@ -75,15 +63,16 @@
         }
     }
 
-    // **ATUALIZAÇÃO DE JAVASCRIPT 1: Função para limpar um filtro específico**
     function clearFilter(filterName) {
       if (filterName === 'ministry') {
-        // O primeiro item da lista é 'all' (Todos)
         ministryChoiceInstance.setChoiceByValue('all');
       } else if (filterName === 'volunteer') {
         volunteerChoiceInstance.setChoiceByValue('all');
       }
-      // applyFilters() é chamado automaticamente pelo evento 'change'
+      
+      // **A CORREÇÃO ESTÁ AQUI**
+      // Força a re-aplicação dos filtros, pois setChoiceByValue não dispara o evento 'change'.
+      applyFilters();
     }
     
     document.addEventListener('DOMContentLoaded', function() {
