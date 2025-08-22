@@ -2,100 +2,220 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Escala de Voluntários</title>
     
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #4a4a4a; }
-    .filters-container { display: flex; gap: 20px; justify-content: center; align-items: flex-start; margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1 ); position: relative; z-index: 20; }
-    .filter-group { display: flex; flex-direction: column; position: relative; }
-    .filter-group label { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #555; }
-    .choices { min-width: 280px; }
-    .clear-filter { position: absolute; top: 35px; right: 30px; cursor: pointer; font-size: 20px; font-weight: bold; color: #aaa; z-index: 5; user-select: none; }
-    .clear-filter:hover { color: #555; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background-color: #fff; }
-    th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: top; }
-    thead th { background-color: #222; color: white; font-weight: bold; text-transform: uppercase; position: sticky; top: 0; z-index: 10; }
-    #schedule-body tr { transition: background-color 0.2s ease-in-out; }
-    #schedule-body tr:nth-child(even) { background-color: #f9f9f9; }
-    #schedule-body tr:hover { background-color: #e8f5e9; }
-    .date-cell { font-weight: bold; white-space: nowrap; }
-    .volunteer-list { margin: 0; padding: 0; list-style: none; }
-    
-    /* **ATUALIZAÇÃO DE CSS: Layout de colunas para o item da lista** */
-    .volunteer-item {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 5px;
-    }
-    .role-prefix {
-      font-weight: bold;
-      color: #0056b3;
-      white-space: nowrap;
-      flex-basis: 110px; /* Largura fixa para a coluna de função */
-      flex-shrink: 0; /* Impede que a coluna encolha */
-    }
-    .volunteer-names-wrapper {
-      flex-grow: 1; /* Faz a coluna de nomes ocupar o resto do espaço */
-    }
+      /* **ATUALIZAÇÃO DE DESIGN: Paleta de cores alinhada com a identidade da igreja** */
+      :root {
+          --primary-color: #00ff00;      /* Verde Elétrico */
+          --primary-dark: #00cc00;       /* Verde mais escuro para gradientes */
+          --secondary-color: #1a1a1a;    /* Cinza quase preto para "zebras" */
+          --accent-color: #00ff00;       /* Destaque principal também em verde */
+          --text-primary: #ffffff;       /* Texto principal branco */
+          --text-secondary: #b0b0b0;    /* Cinza claro para texto secundário */
+          --border-color: #333333;       /* Borda cinza escura */
+          --success-color: #10b981;      /* Mantido para status */
+          --warning-color: #f59e0b;      /* Mantido para status */
+          --background: #000000;         /* Fundo principal preto */
+          --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2 );
+          --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+          --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+          --radius: 12px;
+          --radius-sm: 8px;
+      }
 
-    .volunteer-name { position: relative; cursor: pointer; display: inline-block; padding: 2px 5px; border-radius: 4px; transition: background-color 0.2s, box-shadow 0.2s; user-select: none; }
-    .highlight { background-color: #ffeb3b; box-shadow: 0 0 8px rgba(255, 235, 59, 0.7); }
-    .volunteer-name .tooltip { visibility: hidden; width: max-content; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 1; top: 50%; left: 105%; transform: translateY(-50%); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 10px; }
-    .volunteer-name:hover .tooltip { visibility: visible; opacity: 1; }
-    .tooltip-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+      * { box-sizing: border-box; }
+
+      body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          background: var(--background); /* Fundo preto sólido */
+          color: var(--text-primary);
+          margin: 0;
+          padding: 0;
+          min-height: 100vh;
+          line-height: 1.6;
+      }
+
+      .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+      .header {
+          text-align: center;
+          margin-bottom: 3rem;
+          background: var(--background);
+          padding: 2rem;
+          border-radius: var(--radius);
+          border: 1px solid var(--border-color);
+          box-shadow: var(--shadow-lg);
+      }
+
+      .header h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: var(--primary-color);
+          margin: 0;
+      }
+
+      .header .subtitle { font-size: 1.1rem; color: var(--text-secondary); margin-top: 0.5rem; font-weight: 400; }
+
+      .filters-container {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+          padding: 1.5rem;
+          background: var(--secondary-color);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-md);
+      }
+
+      .filter-group { position: relative; }
+      .filter-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+      .choices { min-width: 100%; }
+
+      .choices__inner {
+          background: var(--background);
+          border: 2px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          padding: 0.75rem;
+          transition: all 0.2s ease;
+          color: var(--text-primary);
+      }
+
+      .choices__inner:focus, .choices[data-type*="select-one"].is-focused .choices__inner {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgb(0 255 0 / 0.2);
+      }
+      
+      .choices__list--dropdown { background: var(--secondary-color); border-color: var(--border-color); }
+      .choices__item--choice { color: var(--text-primary); }
+
+      .clear-filter {
+          position: absolute;
+          top: 2.5rem;
+          right: 1rem;
+          cursor: pointer;
+          font-size: 1.25rem;
+          color: var(--text-secondary);
+          z-index: 10;
+          transition: all 0.2s ease;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+      }
+
+      .clear-filter:hover { background: var(--primary-color); color: black; }
+
+      .table-container { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid var(--border-color); }
+      table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+      th {
+          background: var(--secondary-color);
+          color: var(--primary-color);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 1rem 1.5rem;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          font-size: 0.85rem;
+          border-bottom: 2px solid var(--primary-color);
+      }
+
+      th:first-child { border-top-left-radius: var(--radius); }
+      th:last-child { border-top-right-radius: var(--radius); }
+      td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+      tbody tr { transition: all 0.2s ease; background: var(--background); }
+      tbody tr:nth-child(even) { background: var(--secondary-color); }
+      tbody tr:hover { background: #222; }
+
+      .date-cell { font-weight: 600; color: var(--text-primary); white-space: nowrap; min-width: 200px; }
+      .date-cell small { display: block; font-weight: 400; color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem; }
+      .volunteer-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+      .volunteer-item { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+
+      .role-prefix {
+          background: var(--border-color);
+          color: var(--text-primary);
+          padding: 0.25rem 0.5rem;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          white-space: nowrap;
+      }
+
+      .volunteer-name {
+          position: relative; cursor: pointer; padding: 0.5rem 0.75rem; border-radius: 25px;
+          background: var(--border-color);
+          border: 2px solid transparent; transition: all 0.3s ease; font-weight: 500;
+          color: var(--text-secondary); text-decoration: none; display: inline-flex;
+          align-items: center; font-size: 0.9rem;
+      }
+
+      .volunteer-name:hover {
+          background: var(--primary-color);
+          color: black;
+          transform: translateY(-2px);
+          box-shadow: 0 0 15px rgb(0 255 0 / 0.5);
+      }
+
+      .highlight {
+          background: var(--primary-color) !important;
+          color: black !important;
+          box-shadow: 0 0 15px rgb(0 255 0 / 0.5) !important;
+          transform: translateY(-2px) !important;
+      }
+
+      .tooltip {
+          visibility: hidden; position: absolute; bottom: 120%; left: 50%;
+          transform: translateX(-50%); background: #111; color: white;
+          padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.8rem;
+          white-space: nowrap; z-index: 1000; opacity: 0; transition: all 0.3s ease;
+          border: 1px solid var(--border-color);
+          display: flex; align-items: center; gap: 0.5rem;
+      }
+
+      .tooltip::after {
+          content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px;
+          border-width: 5px; border-style: solid; border-color: #111 transparent transparent transparent;
+      }
+
+      .volunteer-name:hover .tooltip { visibility: visible; opacity: 1; }
+      .tooltip-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color); }
+
+      @media (max-width: 768px) {
+          .container { padding: 1rem; }
+          .header h1 { font-size: 2rem; }
+          .filters-container { grid-template-columns: 1fr; padding: 1rem; }
+          th, td { padding: 0.75rem; font-size: 0.9rem; }
+          .date-cell { min-width: 150px; }
+          .volunteer-name { font-size: 0.8rem; padding: 0.4rem 0.6rem; }
+      }
+
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .table-container, .filters-container, .header { animation: fadeIn 0.5s ease-out; }
+      .volunteer-name:focus { outline: 2px solid var(--primary-color); outline-offset: 2px; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-  <script>
-    let ministryChoiceInstance;
-    let volunteerChoiceInstance;
-    function highlightMember(memberId ) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.add('highlight')); }
-    function removeHighlight(memberId) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.remove('highlight')); }
-    function applyFilters() {
-        const ministryFilter = ministryChoiceInstance.getValue(true);
-        const volunteerFilter = volunteerChoiceInstance.getValue(true);
-        const tableBody = document.getElementById('schedule-body');
-        for (const row of tableBody.rows) {
-            let showRow = true;
-            if (ministryFilter && ministryFilter !== 'all') {
-                const ministryCell = row.cells[ministries.indexOf(ministryFilter) + 1];
-                if (!ministryCell || ministryCell.innerText.trim() === '') { showRow = false; }
-            }
-            if (volunteerFilter && volunteerFilter !== 'all') {
-                const isVolunteerInRow = Array.from(row.getElementsByClassName('volunteer-name')).some(el => el.getAttribute('data-member-name') === volunteerFilter);
-                if (!isVolunteerInRow) { showRow = false; }
-            }
-            row.style.display = showRow ? '' : 'none';
-        }
-    }
-    function clearFilter(filterName) {
-      if (filterName === 'ministry') { ministryChoiceInstance.setChoiceByValue('all'); } 
-      else if (filterName === 'volunteer') { volunteerChoiceInstance.setChoiceByValue('all'); }
-      applyFilters();
-    }
-    function filterByVolunteer(volunteerName) {
-      volunteerChoiceInstance.setChoiceByValue(volunteerName);
-      applyFilters();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      const ministryElement = document.getElementById('ministry-filter');
-      const volunteerElement = document.getElementById('volunteer-filter');
-      ministryChoiceInstance = new Choices(ministryElement, { searchPlaceholderValue: 'Pesquisar ministério...', itemSelectText: '' });
-      volunteerChoiceInstance = new Choices(volunteerElement, { searchPlaceholderValue: 'Pesquisar voluntário...', itemSelectText: '' });
-      ministryElement.addEventListener('change', applyFilters);
-      volunteerElement.addEventListener('change', applyFilters);
-    });
-  </script>
 
 </head>
 <body>
-    <h1>Escala de Voluntários</h1>
-    
+    <div class="container">
+        <div class="header">
+            <h1>Escala de Voluntários</h1>
+            <p class="subtitle">Casa dos Filhos</p>
+        </div>
+        
   <div class="filters-container">
     <div class="filter-group">
-      <label for="ministry-filter">Filtrar por Ministério:</label>
+      <label for="ministry-filter">Filtrar por Ministério</label>
       <select id="ministry-filter">
         <option value="all">Todos os Ministérios</option>
         <option value="Mídia">Mídia</option>
@@ -103,7 +223,7 @@
       <span class="clear-filter" onclick="clearFilter('ministry')">&times;</span>
     </div>
     <div class="filter-group">
-      <label for="volunteer-filter">Filtrar por Voluntário:</label>
+      <label for="volunteer-filter">Filtrar por Voluntário</label>
       <select id="volunteer-filter">
         <option value="all">Todos os Voluntários</option>
         <option value="Agda Moreira">Agda Moreira</option><option value="Amanda Nunes">Amanda Nunes</option><option value="Ana Durli">Ana Durli</option><option value="Andre Almeida">Andre Almeida</option><option value="Ayrton Sena">Ayrton Sena</option><option value="Ayrton Verçosa">Ayrton Verçosa</option><option value="Bianca Andrade">Bianca Andrade</option><option value="Emily Garcia">Emily Garcia</option><option value="Emy Winehouse">Emy Winehouse</option><option value="Ester Ramos">Ester Ramos</option><option value="Fernanda Torres">Fernanda Torres</option><option value="Gihh Santos">Gihh Santos</option><option value="Iasmim Flores">Iasmim Flores</option><option value="John Lennon">John Lennon</option><option value="Koler Max">Koler Max</option><option value="Marcy Teixeira">Marcy Teixeira</option><option value="Matheus Lopes">Matheus Lopes</option><option value="Patrick Cunha">Patrick Cunha</option><option value="Rafael Portugal">Rafael Portugal</option><option value="Tai Campos">Tai Campos</option><option value="Thaine Matos">Thaine Matos</option><option value="Thais Fernandes">Thais Fernandes</option><option value="Thatila Carvalho">Thatila Carvalho</option><option value="Thays Carros">Thays Carros</option><option value="Tom Jobim">Tom Jobim</option>
@@ -112,22 +232,23 @@
     </div>
   </div>
 
-    <table>
-        <thead><tr><th>Data</th><th>Mídia</th></tr></thead>
-        <tbody id="schedule-body"><tr><td class="date-cell">Celebração de Domingo  
-<small>03/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="fa06dfde-3fdc-4bef-b262-6461f902f4d9" data-member-name="Thais Fernandes" onmouseover="highlightMember('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" onmouseout="removeHighlight('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" ondblclick="filterByVolunteer('Thais Fernandes')">
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Data</th><th>Mídia</th></tr></thead>
+                <tbody id="schedule-body"><tr><td class="date-cell">Celebração de Domingo  
+<small>03/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição</span><div><span class="volunteer-name" data-member-id="fa06dfde-3fdc-4bef-b262-6461f902f4d9" data-member-name="Thais Fernandes" onmouseover="highlightMember('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" onmouseout="removeHighlight('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" ondblclick="filterByVolunteer('Thais Fernandes')">
                      THAIS
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thais Fernandes" class="tooltip-pic">
                        <span>Thais Fernandes</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="a816985b-4523-4487-b0e7-246a71b1d809" data-member-name="Ester Ramos" onmouseover="highlightMember('a816985b-4523-4487-b0e7-246a71b1d809')" onmouseout="removeHighlight('a816985b-4523-4487-b0e7-246a71b1d809')" ondblclick="filterByVolunteer('Ester Ramos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="a816985b-4523-4487-b0e7-246a71b1d809" data-member-name="Ester Ramos" onmouseover="highlightMember('a816985b-4523-4487-b0e7-246a71b1d809')" onmouseout="removeHighlight('a816985b-4523-4487-b0e7-246a71b1d809')" ondblclick="filterByVolunteer('Ester Ramos')">
                      ESTER
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Ester Ramos" class="tooltip-pic">
                        <span>Ester Ramos</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="a1914af2-da5b-45ff-a501-37312ca45c1b" data-member-name="Ana Durli" onmouseover="highlightMember('a1914af2-da5b-45ff-a501-37312ca45c1b')" onmouseout="removeHighlight('a1914af2-da5b-45ff-a501-37312ca45c1b')" ondblclick="filterByVolunteer('Ana Durli')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="a1914af2-da5b-45ff-a501-37312ca45c1b" data-member-name="Ana Durli" onmouseover="highlightMember('a1914af2-da5b-45ff-a501-37312ca45c1b')" onmouseout="removeHighlight('a1914af2-da5b-45ff-a501-37312ca45c1b')" ondblclick="filterByVolunteer('Ana Durli')">
                      ANA D
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Ana Durli" class="tooltip-pic">
@@ -139,13 +260,13 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Agda Moreira" class="tooltip-pic">
                        <span>Agda Moreira</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8" data-member-name="Patrick Cunha" onmouseover="highlightMember('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" onmouseout="removeHighlight('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" ondblclick="filterByVolunteer('Patrick Cunha')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8" data-member-name="Patrick Cunha" onmouseover="highlightMember('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" onmouseout="removeHighlight('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" ondblclick="filterByVolunteer('Patrick Cunha')">
                      PATRICK
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Patrick Cunha" class="tooltip-pic">
                        <span>Patrick Cunha</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="9c8c45d0-432c-4d83-b343-5abbb2ecca7f" data-member-name="Ayrton Sena" onmouseover="highlightMember('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" onmouseout="removeHighlight('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" ondblclick="filterByVolunteer('Ayrton Sena')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="9c8c45d0-432c-4d83-b343-5abbb2ecca7f" data-member-name="Ayrton Sena" onmouseover="highlightMember('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" onmouseout="removeHighlight('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" ondblclick="filterByVolunteer('Ayrton Sena')">
                      AYRTON
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Ayrton Sena" class="tooltip-pic">
@@ -158,19 +279,19 @@
                        <span>Matheus Lopes</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Maria da Casa  
-<small>05/08 - terça-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="fe40ecd9-51b3-4243-91a1-87387cf08231" data-member-name="Iasmim Flores" onmouseover="highlightMember('fe40ecd9-51b3-4243-91a1-87387cf08231')" onmouseout="removeHighlight('fe40ecd9-51b3-4243-91a1-87387cf08231')" ondblclick="filterByVolunteer('Iasmim Flores')">
+<small>05/08 - terça-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição</span><div><span class="volunteer-name" data-member-id="fe40ecd9-51b3-4243-91a1-87387cf08231" data-member-name="Iasmim Flores" onmouseover="highlightMember('fe40ecd9-51b3-4243-91a1-87387cf08231')" onmouseout="removeHighlight('fe40ecd9-51b3-4243-91a1-87387cf08231')" ondblclick="filterByVolunteer('Iasmim Flores')">
                      IASMIM
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Iasmim Flores" class="tooltip-pic">
                        <span>Iasmim Flores</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="1fb5f75b-b2f2-4691-bcfa-ea1318c1f421" data-member-name="Marcy Teixeira" onmouseover="highlightMember('1fb5f75b-b2f2-4691-bcfa-ea1318c1f421')" onmouseout="removeHighlight('1fb5f75b-b2f2-4691-bcfa-ea1318c1f421')" ondblclick="filterByVolunteer('Marcy Teixeira')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="1fb5f75b-b2f2-4691-bcfa-ea1318c1f421" data-member-name="Marcy Teixeira" onmouseover="highlightMember('1fb5f75b-b2f2-4691-bcfa-ea1318c1f421')" onmouseout="removeHighlight('1fb5f75b-b2f2-4691-bcfa-ea1318c1f421')" ondblclick="filterByVolunteer('Marcy Teixeira')">
                      MARCY
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Marcy Teixeira" class="tooltip-pic">
                        <span>Marcy Teixeira</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="d33c1840-9e1b-4f0f-9717-ca4bb22a9003" data-member-name="Amanda Nunes" onmouseover="highlightMember('d33c1840-9e1b-4f0f-9717-ca4bb22a9003')" onmouseout="removeHighlight('d33c1840-9e1b-4f0f-9717-ca4bb22a9003')" ondblclick="filterByVolunteer('Amanda Nunes')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="d33c1840-9e1b-4f0f-9717-ca4bb22a9003" data-member-name="Amanda Nunes" onmouseover="highlightMember('d33c1840-9e1b-4f0f-9717-ca4bb22a9003')" onmouseout="removeHighlight('d33c1840-9e1b-4f0f-9717-ca4bb22a9003')" ondblclick="filterByVolunteer('Amanda Nunes')">
                      AMANDA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Amanda Nunes" class="tooltip-pic">
@@ -182,32 +303,32 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Fernanda Torres" class="tooltip-pic">
                        <span>Fernanda Torres</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
                      THAINE
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thaine Matos" class="tooltip-pic">
                        <span>Thaine Matos</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="4042a74b-5bda-4d4b-884d-006c7128a1e5" data-member-name="Ayrton Verçosa" onmouseover="highlightMember('4042a74b-5bda-4d4b-884d-006c7128a1e5')" onmouseout="removeHighlight('4042a74b-5bda-4d4b-884d-006c7128a1e5')" ondblclick="filterByVolunteer('Ayrton Verçosa')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="4042a74b-5bda-4d4b-884d-006c7128a1e5" data-member-name="Ayrton Verçosa" onmouseover="highlightMember('4042a74b-5bda-4d4b-884d-006c7128a1e5')" onmouseout="removeHighlight('4042a74b-5bda-4d4b-884d-006c7128a1e5')" ondblclick="filterByVolunteer('Ayrton Verçosa')">
                      VERCOSA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/ayrton-vercosa.jpeg" alt="Ayrton Verçosa" class="tooltip-pic">
                        <span>Ayrton Verçosa</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Celebração de Domingo  
-<small>10/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="2ee8fc8f-7aa3-464d-b273-ada4f7fc778b" data-member-name="John Lennon" onmouseover="highlightMember('2ee8fc8f-7aa3-464d-b273-ada4f7fc778b')" onmouseout="removeHighlight('2ee8fc8f-7aa3-464d-b273-ada4f7fc778b')" ondblclick="filterByVolunteer('John Lennon')">
+<small>10/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição</span><div><span class="volunteer-name" data-member-id="2ee8fc8f-7aa3-464d-b273-ada4f7fc778b" data-member-name="John Lennon" onmouseover="highlightMember('2ee8fc8f-7aa3-464d-b273-ada4f7fc778b')" onmouseout="removeHighlight('2ee8fc8f-7aa3-464d-b273-ada4f7fc778b')" ondblclick="filterByVolunteer('John Lennon')">
                      JOHN
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="John Lennon" class="tooltip-pic">
                        <span>John Lennon</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="26f82c80-341d-4bf7-9d9f-e1cba67ca102" data-member-name="Bianca Andrade" onmouseover="highlightMember('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" onmouseout="removeHighlight('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" ondblclick="filterByVolunteer('Bianca Andrade')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="26f82c80-341d-4bf7-9d9f-e1cba67ca102" data-member-name="Bianca Andrade" onmouseover="highlightMember('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" onmouseout="removeHighlight('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" ondblclick="filterByVolunteer('Bianca Andrade')">
                      BIANCA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Bianca Andrade" class="tooltip-pic">
                        <span>Bianca Andrade</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="abccab5b-8a30-4c17-8b6b-22dd48e70f0c" data-member-name="Tai Campos" onmouseover="highlightMember('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" onmouseout="removeHighlight('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" ondblclick="filterByVolunteer('Tai Campos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="abccab5b-8a30-4c17-8b6b-22dd48e70f0c" data-member-name="Tai Campos" onmouseover="highlightMember('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" onmouseout="removeHighlight('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" ondblclick="filterByVolunteer('Tai Campos')">
                      TAI
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Tai Campos" class="tooltip-pic">
@@ -219,57 +340,57 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Tom Jobim" class="tooltip-pic">
                        <span>Tom Jobim</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="f32152b4-3bd7-4387-a1d1-bbf640fac98f" data-member-name="Koler Max" onmouseover="highlightMember('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" onmouseout="removeHighlight('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" ondblclick="filterByVolunteer('Koler Max')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="f32152b4-3bd7-4387-a1d1-bbf640fac98f" data-member-name="Koler Max" onmouseover="highlightMember('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" onmouseout="removeHighlight('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" ondblclick="filterByVolunteer('Koler Max')">
                      KOLER
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Koler Max" class="tooltip-pic">
                        <span>Koler Max</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="96cca2ef-f20f-4529-94d8-16d70072d47a" data-member-name="Andre Almeida" onmouseover="highlightMember('96cca2ef-f20f-4529-94d8-16d70072d47a')" onmouseout="removeHighlight('96cca2ef-f20f-4529-94d8-16d70072d47a')" ondblclick="filterByVolunteer('Andre Almeida')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="96cca2ef-f20f-4529-94d8-16d70072d47a" data-member-name="Andre Almeida" onmouseover="highlightMember('96cca2ef-f20f-4529-94d8-16d70072d47a')" onmouseout="removeHighlight('96cca2ef-f20f-4529-94d8-16d70072d47a')" ondblclick="filterByVolunteer('Andre Almeida')">
                      ANDRE A
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Andre Almeida" class="tooltip-pic">
                        <span>Andre Almeida</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">No Fio do Bigode  
-<small>12/08 - terça-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="9aec0765-55c9-4334-b760-4b3c22a667eb" data-member-name="Emily Garcia" onmouseover="highlightMember('9aec0765-55c9-4334-b760-4b3c22a667eb')" onmouseout="removeHighlight('9aec0765-55c9-4334-b760-4b3c22a667eb')" ondblclick="filterByVolunteer('Emily Garcia')">
+<small>12/08 - terça-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="9aec0765-55c9-4334-b760-4b3c22a667eb" data-member-name="Emily Garcia" onmouseover="highlightMember('9aec0765-55c9-4334-b760-4b3c22a667eb')" onmouseout="removeHighlight('9aec0765-55c9-4334-b760-4b3c22a667eb')" ondblclick="filterByVolunteer('Emily Garcia')">
                      EMILY
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Emily Garcia" class="tooltip-pic">
                        <span>Emily Garcia</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="a1914af2-da5b-45ff-a501-37312ca45c1b" data-member-name="Ana Durli" onmouseover="highlightMember('a1914af2-da5b-45ff-a501-37312ca45c1b')" onmouseout="removeHighlight('a1914af2-da5b-45ff-a501-37312ca45c1b')" ondblclick="filterByVolunteer('Ana Durli')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="a1914af2-da5b-45ff-a501-37312ca45c1b" data-member-name="Ana Durli" onmouseover="highlightMember('a1914af2-da5b-45ff-a501-37312ca45c1b')" onmouseout="removeHighlight('a1914af2-da5b-45ff-a501-37312ca45c1b')" ondblclick="filterByVolunteer('Ana Durli')">
                      ANA D
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Ana Durli" class="tooltip-pic">
                        <span>Ana Durli</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="3abfc623-a196-45d8-b480-7a6bc9961dbe" data-member-name="Thatila Carvalho" onmouseover="highlightMember('3abfc623-a196-45d8-b480-7a6bc9961dbe')" onmouseout="removeHighlight('3abfc623-a196-45d8-b480-7a6bc9961dbe')" ondblclick="filterByVolunteer('Thatila Carvalho')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="3abfc623-a196-45d8-b480-7a6bc9961dbe" data-member-name="Thatila Carvalho" onmouseover="highlightMember('3abfc623-a196-45d8-b480-7a6bc9961dbe')" onmouseout="removeHighlight('3abfc623-a196-45d8-b480-7a6bc9961dbe')" ondblclick="filterByVolunteer('Thatila Carvalho')">
                      THATILA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thatila Carvalho" class="tooltip-pic">
                        <span>Thatila Carvalho</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="9c8c45d0-432c-4d83-b343-5abbb2ecca7f" data-member-name="Ayrton Sena" onmouseover="highlightMember('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" onmouseout="removeHighlight('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" ondblclick="filterByVolunteer('Ayrton Sena')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="9c8c45d0-432c-4d83-b343-5abbb2ecca7f" data-member-name="Ayrton Sena" onmouseover="highlightMember('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" onmouseout="removeHighlight('9c8c45d0-432c-4d83-b343-5abbb2ecca7f')" ondblclick="filterByVolunteer('Ayrton Sena')">
                      AYRTON
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Ayrton Sena" class="tooltip-pic">
                        <span>Ayrton Sena</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Celebração de Domingo  
-<small>17/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="c3eadbbc-c980-4de9-b3b3-07027cddb0e7" data-member-name="Emy Winehouse" onmouseover="highlightMember('c3eadbbc-c980-4de9-b3b3-07027cddb0e7')" onmouseout="removeHighlight('c3eadbbc-c980-4de9-b3b3-07027cddb0e7')" ondblclick="filterByVolunteer('Emy Winehouse')">
+<small>17/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição</span><div><span class="volunteer-name" data-member-id="c3eadbbc-c980-4de9-b3b3-07027cddb0e7" data-member-name="Emy Winehouse" onmouseover="highlightMember('c3eadbbc-c980-4de9-b3b3-07027cddb0e7')" onmouseout="removeHighlight('c3eadbbc-c980-4de9-b3b3-07027cddb0e7')" ondblclick="filterByVolunteer('Emy Winehouse')">
                      EMY
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Emy Winehouse" class="tooltip-pic">
                        <span>Emy Winehouse</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="24658e8f-7e95-4029-94aa-b3bade603326" data-member-name="Rafael Portugal" onmouseover="highlightMember('24658e8f-7e95-4029-94aa-b3bade603326')" onmouseout="removeHighlight('24658e8f-7e95-4029-94aa-b3bade603326')" ondblclick="filterByVolunteer('Rafael Portugal')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="24658e8f-7e95-4029-94aa-b3bade603326" data-member-name="Rafael Portugal" onmouseover="highlightMember('24658e8f-7e95-4029-94aa-b3bade603326')" onmouseout="removeHighlight('24658e8f-7e95-4029-94aa-b3bade603326')" ondblclick="filterByVolunteer('Rafael Portugal')">
                      RAFAEL
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Rafael Portugal" class="tooltip-pic">
                        <span>Rafael Portugal</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="cc338e24-abd0-4f29-83cc-03c67de8174c" data-member-name="Agda Moreira" onmouseover="highlightMember('cc338e24-abd0-4f29-83cc-03c67de8174c')" onmouseout="removeHighlight('cc338e24-abd0-4f29-83cc-03c67de8174c')" ondblclick="filterByVolunteer('Agda Moreira')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="cc338e24-abd0-4f29-83cc-03c67de8174c" data-member-name="Agda Moreira" onmouseover="highlightMember('cc338e24-abd0-4f29-83cc-03c67de8174c')" onmouseout="removeHighlight('cc338e24-abd0-4f29-83cc-03c67de8174c')" ondblclick="filterByVolunteer('Agda Moreira')">
                      AGDA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Agda Moreira" class="tooltip-pic">
@@ -281,39 +402,39 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Amanda Nunes" class="tooltip-pic">
                        <span>Amanda Nunes</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8" data-member-name="Patrick Cunha" onmouseover="highlightMember('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" onmouseout="removeHighlight('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" ondblclick="filterByVolunteer('Patrick Cunha')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8" data-member-name="Patrick Cunha" onmouseover="highlightMember('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" onmouseout="removeHighlight('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" ondblclick="filterByVolunteer('Patrick Cunha')">
                      PATRICK
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Patrick Cunha" class="tooltip-pic">
                        <span>Patrick Cunha</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="ad6d02ee-7f48-4176-8155-b22c363dd0e2" data-member-name="Matheus Lopes" onmouseover="highlightMember('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" onmouseout="removeHighlight('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" ondblclick="filterByVolunteer('Matheus Lopes')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="ad6d02ee-7f48-4176-8155-b22c363dd0e2" data-member-name="Matheus Lopes" onmouseover="highlightMember('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" onmouseout="removeHighlight('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" ondblclick="filterByVolunteer('Matheus Lopes')">
                      MATHEUS
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Matheus Lopes" class="tooltip-pic">
                        <span>Matheus Lopes</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Empreendedores do Reino  
-<small>19/08 - terça-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="61b67218-9c28-4361-bfea-876ee2702b95" data-member-name="Gihh Santos" onmouseover="highlightMember('61b67218-9c28-4361-bfea-876ee2702b95')" onmouseout="removeHighlight('61b67218-9c28-4361-bfea-876ee2702b95')" ondblclick="filterByVolunteer('Gihh Santos')">
+<small>19/08 - terça-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="61b67218-9c28-4361-bfea-876ee2702b95" data-member-name="Gihh Santos" onmouseover="highlightMember('61b67218-9c28-4361-bfea-876ee2702b95')" onmouseout="removeHighlight('61b67218-9c28-4361-bfea-876ee2702b95')" ondblclick="filterByVolunteer('Gihh Santos')">
                      GIHH
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Gihh Santos" class="tooltip-pic">
                        <span>Gihh Santos</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
                      THAINE
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thaine Matos" class="tooltip-pic">
                        <span>Thaine Matos</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Feijoada  
-<small>23/08 - sábado</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="bb5e3987-b265-423c-8f29-2c9ab02caf28" data-member-name="Thays Carros" onmouseover="highlightMember('bb5e3987-b265-423c-8f29-2c9ab02caf28')" onmouseout="removeHighlight('bb5e3987-b265-423c-8f29-2c9ab02caf28')" ondblclick="filterByVolunteer('Thays Carros')">
+<small>23/08 - sábado</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição</span><div><span class="volunteer-name" data-member-id="bb5e3987-b265-423c-8f29-2c9ab02caf28" data-member-name="Thays Carros" onmouseover="highlightMember('bb5e3987-b265-423c-8f29-2c9ab02caf28')" onmouseout="removeHighlight('bb5e3987-b265-423c-8f29-2c9ab02caf28')" ondblclick="filterByVolunteer('Thays Carros')">
                      THAYS CARROS
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thays Carros" class="tooltip-pic">
                        <span>Thays Carros</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="a816985b-4523-4487-b0e7-246a71b1d809" data-member-name="Ester Ramos" onmouseover="highlightMember('a816985b-4523-4487-b0e7-246a71b1d809')" onmouseout="removeHighlight('a816985b-4523-4487-b0e7-246a71b1d809')" ondblclick="filterByVolunteer('Ester Ramos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="a816985b-4523-4487-b0e7-246a71b1d809" data-member-name="Ester Ramos" onmouseover="highlightMember('a816985b-4523-4487-b0e7-246a71b1d809')" onmouseout="removeHighlight('a816985b-4523-4487-b0e7-246a71b1d809')" ondblclick="filterByVolunteer('Ester Ramos')">
                      ESTER
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Ester Ramos" class="tooltip-pic">
@@ -325,13 +446,13 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Marcy Teixeira" class="tooltip-pic">
                        <span>Marcy Teixeira</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="e4434008-ca66-44aa-979f-9c19757ca4a5" data-member-name="Fernanda Torres" onmouseover="highlightMember('e4434008-ca66-44aa-979f-9c19757ca4a5')" onmouseout="removeHighlight('e4434008-ca66-44aa-979f-9c19757ca4a5')" ondblclick="filterByVolunteer('Fernanda Torres')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="e4434008-ca66-44aa-979f-9c19757ca4a5" data-member-name="Fernanda Torres" onmouseover="highlightMember('e4434008-ca66-44aa-979f-9c19757ca4a5')" onmouseout="removeHighlight('e4434008-ca66-44aa-979f-9c19757ca4a5')" ondblclick="filterByVolunteer('Fernanda Torres')">
                      FERNANDA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Fernanda Torres" class="tooltip-pic">
                        <span>Fernanda Torres</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="f32152b4-3bd7-4387-a1d1-bbf640fac98f" data-member-name="Koler Max" onmouseover="highlightMember('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" onmouseout="removeHighlight('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" ondblclick="filterByVolunteer('Koler Max')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="f32152b4-3bd7-4387-a1d1-bbf640fac98f" data-member-name="Koler Max" onmouseover="highlightMember('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" onmouseout="removeHighlight('f32152b4-3bd7-4387-a1d1-bbf640fac98f')" ondblclick="filterByVolunteer('Koler Max')">
                      KOLER
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Koler Max" class="tooltip-pic">
@@ -349,14 +470,14 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Patrick Cunha" class="tooltip-pic">
                        <span>Patrick Cunha</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="4042a74b-5bda-4d4b-884d-006c7128a1e5" data-member-name="Ayrton Verçosa" onmouseover="highlightMember('4042a74b-5bda-4d4b-884d-006c7128a1e5')" onmouseout="removeHighlight('4042a74b-5bda-4d4b-884d-006c7128a1e5')" ondblclick="filterByVolunteer('Ayrton Verçosa')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="4042a74b-5bda-4d4b-884d-006c7128a1e5" data-member-name="Ayrton Verçosa" onmouseover="highlightMember('4042a74b-5bda-4d4b-884d-006c7128a1e5')" onmouseout="removeHighlight('4042a74b-5bda-4d4b-884d-006c7128a1e5')" ondblclick="filterByVolunteer('Ayrton Verçosa')">
                      VERCOSA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/ayrton-vercosa.jpeg" alt="Ayrton Verçosa" class="tooltip-pic">
                        <span>Ayrton Verçosa</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Aniversário da Casa  
-<small>24/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="fa06dfde-3fdc-4bef-b262-6461f902f4d9" data-member-name="Thais Fernandes" onmouseover="highlightMember('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" onmouseout="removeHighlight('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" ondblclick="filterByVolunteer('Thais Fernandes')">
+<small>24/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Edição</span><div><span class="volunteer-name" data-member-id="fa06dfde-3fdc-4bef-b262-6461f902f4d9" data-member-name="Thais Fernandes" onmouseover="highlightMember('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" onmouseout="removeHighlight('fa06dfde-3fdc-4bef-b262-6461f902f4d9')" ondblclick="filterByVolunteer('Thais Fernandes')">
                      THAIS
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thais Fernandes" class="tooltip-pic">
@@ -368,7 +489,7 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Iasmim Flores" class="tooltip-pic">
                        <span>Iasmim Flores</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="26f82c80-341d-4bf7-9d9f-e1cba67ca102" data-member-name="Bianca Andrade" onmouseover="highlightMember('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" onmouseout="removeHighlight('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" ondblclick="filterByVolunteer('Bianca Andrade')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="26f82c80-341d-4bf7-9d9f-e1cba67ca102" data-member-name="Bianca Andrade" onmouseover="highlightMember('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" onmouseout="removeHighlight('26f82c80-341d-4bf7-9d9f-e1cba67ca102')" ondblclick="filterByVolunteer('Bianca Andrade')">
                      BIANCA
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Bianca Andrade" class="tooltip-pic">
@@ -386,13 +507,13 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Rafael Portugal" class="tooltip-pic">
                        <span>Rafael Portugal</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="abccab5b-8a30-4c17-8b6b-22dd48e70f0c" data-member-name="Tai Campos" onmouseover="highlightMember('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" onmouseout="removeHighlight('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" ondblclick="filterByVolunteer('Tai Campos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="abccab5b-8a30-4c17-8b6b-22dd48e70f0c" data-member-name="Tai Campos" onmouseover="highlightMember('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" onmouseout="removeHighlight('abccab5b-8a30-4c17-8b6b-22dd48e70f0c')" ondblclick="filterByVolunteer('Tai Campos')">
                      TAI
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Tai Campos" class="tooltip-pic">
                        <span>Tai Campos</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
                      THAINE
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thaine Matos" class="tooltip-pic">
@@ -410,7 +531,7 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thatila Carvalho" class="tooltip-pic">
                        <span>Thatila Carvalho</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="96cca2ef-f20f-4529-94d8-16d70072d47a" data-member-name="Andre Almeida" onmouseover="highlightMember('96cca2ef-f20f-4529-94d8-16d70072d47a')" onmouseout="removeHighlight('96cca2ef-f20f-4529-94d8-16d70072d47a')" ondblclick="filterByVolunteer('Andre Almeida')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="96cca2ef-f20f-4529-94d8-16d70072d47a" data-member-name="Andre Almeida" onmouseover="highlightMember('96cca2ef-f20f-4529-94d8-16d70072d47a')" onmouseout="removeHighlight('96cca2ef-f20f-4529-94d8-16d70072d47a')" ondblclick="filterByVolunteer('Andre Almeida')">
                      ANDRE A
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Andre Almeida" class="tooltip-pic">
@@ -423,26 +544,26 @@
                        <span>Ayrton Sena</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Vigília  
-<small>29/08 - sexta-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8" data-member-name="Patrick Cunha" onmouseover="highlightMember('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" onmouseout="removeHighlight('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" ondblclick="filterByVolunteer('Patrick Cunha')">
+<small>29/08 - sexta-feira</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8" data-member-name="Patrick Cunha" onmouseover="highlightMember('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" onmouseout="removeHighlight('bd1989e7-ac02-4f05-9c83-b3fb6c58e9a8')" ondblclick="filterByVolunteer('Patrick Cunha')">
                      PATRICK
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Patrick Cunha" class="tooltip-pic">
                        <span>Patrick Cunha</span>
                      </span>
                    </span></div></li></ul></td></tr><tr><td class="date-cell">Celebração de Domingo  
-<small>31/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Foto: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="61b67218-9c28-4361-bfea-876ee2702b95" data-member-name="Gihh Santos" onmouseover="highlightMember('61b67218-9c28-4361-bfea-876ee2702b95')" onmouseout="removeHighlight('61b67218-9c28-4361-bfea-876ee2702b95')" ondblclick="filterByVolunteer('Gihh Santos')">
+<small>31/08 - domingo</small></td><td><ul class="volunteer-list"><li class="volunteer-item"><span class="role-prefix">Foto</span><div><span class="volunteer-name" data-member-id="61b67218-9c28-4361-bfea-876ee2702b95" data-member-name="Gihh Santos" onmouseover="highlightMember('61b67218-9c28-4361-bfea-876ee2702b95')" onmouseout="removeHighlight('61b67218-9c28-4361-bfea-876ee2702b95')" ondblclick="filterByVolunteer('Gihh Santos')">
                      GIHH
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Gihh Santos" class="tooltip-pic">
                        <span>Gihh Santos</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="9defbe6e-ca4d-468f-9733-26ff1bc512b5" data-member-name="Tom Jobim" onmouseover="highlightMember('9defbe6e-ca4d-468f-9733-26ff1bc512b5')" onmouseout="removeHighlight('9defbe6e-ca4d-468f-9733-26ff1bc512b5')" ondblclick="filterByVolunteer('Tom Jobim')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Projeção</span><div><span class="volunteer-name" data-member-id="9defbe6e-ca4d-468f-9733-26ff1bc512b5" data-member-name="Tom Jobim" onmouseover="highlightMember('9defbe6e-ca4d-468f-9733-26ff1bc512b5')" onmouseout="removeHighlight('9defbe6e-ca4d-468f-9733-26ff1bc512b5')" ondblclick="filterByVolunteer('Tom Jobim')">
                      TOM
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Tom Jobim" class="tooltip-pic">
                        <span>Tom Jobim</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Stories</span><div><span class="volunteer-name" data-member-id="e32c3a7e-234a-4ca3-93f4-937c02bc5c22" data-member-name="Thaine Matos" onmouseover="highlightMember('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" onmouseout="removeHighlight('e32c3a7e-234a-4ca3-93f4-937c02bc5c22')" ondblclick="filterByVolunteer('Thaine Matos')">
                      THAINE
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Thaine Matos" class="tooltip-pic">
@@ -454,13 +575,57 @@
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Koler Max" class="tooltip-pic">
                        <span>Koler Max</span>
                      </span>
-                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão: </span><div class="volunteer-names-wrapper"><span class="volunteer-name" data-member-id="ad6d02ee-7f48-4176-8155-b22c363dd0e2" data-member-name="Matheus Lopes" onmouseover="highlightMember('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" onmouseout="removeHighlight('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" ondblclick="filterByVolunteer('Matheus Lopes')">
+                   </span></div></li><li class="volunteer-item"><span class="role-prefix">Transmissão</span><div><span class="volunteer-name" data-member-id="ad6d02ee-7f48-4176-8155-b22c363dd0e2" data-member-name="Matheus Lopes" onmouseover="highlightMember('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" onmouseout="removeHighlight('ad6d02ee-7f48-4176-8155-b22c363dd0e2')" ondblclick="filterByVolunteer('Matheus Lopes')">
                      MATHEUS
                      <span class="tooltip">
                        <img src="https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg" alt="Matheus Lopes" class="tooltip-pic">
                        <span>Matheus Lopes</span>
                      </span>
                    </span></div></li></ul></td></tr></tbody>
-    </table>
+            </table>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+      let ministryChoiceInstance;
+      let volunteerChoiceInstance;
+      function highlightMember(memberId ) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.add('highlight')); }
+      function removeHighlight(memberId) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.remove('highlight')); }
+      function applyFilters() {
+          const ministryFilter = ministryChoiceInstance.getValue(true);
+          const volunteerFilter = volunteerChoiceInstance.getValue(true);
+          const tableBody = document.getElementById('schedule-body');
+          for (const row of tableBody.rows) {
+              let showRow = true;
+              if (ministryFilter && ministryFilter !== 'all') {
+                  const ministryCell = row.cells[ministries.indexOf(ministryFilter) + 1];
+                  if (!ministryCell || ministryCell.innerText.trim() === '') { showRow = false; }
+              }
+              if (volunteerFilter && volunteerFilter !== 'all') {
+                  const isVolunteerInRow = Array.from(row.getElementsByClassName('volunteer-name')).some(el => el.getAttribute('data-member-name') === volunteerFilter);
+                  if (!isVolunteerInRow) { showRow = false; }
+              }
+              row.style.display = showRow ? '' : 'none';
+          }
+      }
+      function clearFilter(filterName) {
+        if (filterName === 'ministry') { ministryChoiceInstance.setChoiceByValue('all'); } 
+        else if (filterName === 'volunteer') { volunteerChoiceInstance.setChoiceByValue('all'); }
+        applyFilters();
+      }
+      function filterByVolunteer(volunteerName) {
+        volunteerChoiceInstance.setChoiceByValue(volunteerName);
+        applyFilters();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        const ministryElement = document.getElementById('ministry-filter');
+        const volunteerElement = document.getElementById('volunteer-filter');
+        ministryChoiceInstance = new Choices(ministryElement, { searchPlaceholderValue: 'Pesquisar ministério...', itemSelectText: '' });
+        volunteerChoiceInstance = new Choices(volunteerElement, { searchPlaceholderValue: 'Pesquisar voluntário...', itemSelectText: '' });
+        ministryElement.addEventListener('change', applyFilters);
+        volunteerElement.addEventListener('change', applyFilters);
+      });
+    </script>
 </body>
 </html>
