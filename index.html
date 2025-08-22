@@ -20,7 +20,18 @@
     .date-cell { font-weight: bold; white-space: nowrap; }
     .volunteer-list { margin: 0; padding: 0; list-style: none; }
     .volunteer-item { display: flex; align-items: center; margin-bottom: 5px; }
-    .volunteer-name { position: relative; cursor: pointer; /* Mude para pointer para indicar clicabilidade */ display: inline-block; padding: 2px 5px; border-radius: 4px; transition: background-color 0.2s, box-shadow 0.2s; }
+    
+    .volunteer-name { 
+      position: relative; 
+      cursor: pointer; 
+      display: inline-block; 
+      padding: 2px 5px; 
+      border-radius: 4px; 
+      transition: background-color 0.2s, box-shadow 0.2s;
+      /* **A CORREÇÃO ESTÁ AQUI** */
+      user-select: none; /* Previne a seleção de texto no duplo clique */
+    }
+
     .role-prefix { font-weight: bold; color: #0056b3; margin-right: 5px; }
     .highlight { background-color: #ffeb3b; box-shadow: 0 0 8px rgba(255, 235, 59, 0.7); }
     .volunteer-name .tooltip { visibility: hidden; width: max-content; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 1; top: 50%; left: 105%; transform: translateY(-50%); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 10px; }
@@ -70,13 +81,9 @@
       applyFilters();
     }
 
-    // **ATUALIZAÇÃO DE JAVASCRIPT 1: Nova função para filtrar por duplo clique**
     function filterByVolunteer(volunteerName) {
-      // Define o valor no dropdown de voluntários
       volunteerChoiceInstance.setChoiceByValue(volunteerName);
-      // Força a atualização da tabela
       applyFilters();
-      // Opcional: Rola a página para o topo para ver o filtro aplicado
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
