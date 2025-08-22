@@ -8,7 +8,7 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #4a4a4a; }
-    .filters-container { display: flex; gap: 20px; justify-content: center; align-items: flex-start; margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1 ); position: relative; z-index: 20; }
+    .filters-container { display: flex; gap: 20px; justify-content: center; align-items: flex-start; margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1  ); position: relative; z-index: 20; }
     .filter-group { display: flex; flex-direction: column; position: relative; }
     .filter-group label { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #555; }
     .choices { min-width: 280px; }
@@ -21,9 +21,9 @@
     #schedule-body tr:nth-child(even) { background-color: #f9f9f9; }
     #schedule-body tr:hover { background-color: #e8f5e9; }
     .date-cell { font-weight: bold; white-space: nowrap; }
+    .date-cell small { font-weight: normal; color: #666; } /* Estilo para a data como subtítulo */
     .volunteer-list { margin: 0; padding: 0; list-style: none; }
     
-    /* **ATUALIZAÇÃO DE CSS: Layout de colunas para o item da lista** */
     .volunteer-item {
       display: flex;
       align-items: flex-start;
@@ -31,17 +31,17 @@
     }
     .role-prefix {
       font-weight: bold;
-      color: #00b300;
+      color: #0056b3;
       white-space: nowrap;
-      flex-basis: 110px; /* Largura fixa para a coluna de função */
-      flex-shrink: 0; /* Impede que a coluna encolha */
+      flex-basis: 110px; 
+      flex-shrink: 0; 
     }
     .volunteer-names-wrapper {
-      flex-grow: 1; /* Faz a coluna de nomes ocupar o resto do espaço */
+      flex-grow: 1; 
     }
 
     .volunteer-name { position: relative; cursor: pointer; display: inline-block; padding: 2px 5px; border-radius: 4px; transition: background-color 0.2s, box-shadow 0.2s; user-select: none; }
-    .highlight { background-color: #00ff00; box-shadow: 0 0 8px rgba(255, 235, 59, 0.7); }
+    .highlight { background-color: #ffeb3b; box-shadow: 0 0 8px rgba(255, 235, 59, 0.7); }
     .volunteer-name .tooltip { visibility: hidden; width: max-content; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 1; top: 50%; left: 105%; transform: translateY(-50%); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 10px; }
     .volunteer-name:hover .tooltip { visibility: visible; opacity: 1; }
     .tooltip-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
@@ -50,7 +50,7 @@
   <script>
     let ministryChoiceInstance;
     let volunteerChoiceInstance;
-    function highlightMember(memberId ) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.add('highlight')); }
+    function highlightMember(memberId  ) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.add('highlight')); }
     function removeHighlight(memberId) { document.querySelectorAll('[data-member-id="' + memberId + '"]').forEach(el => el.classList.remove('highlight')); }
     function applyFilters() {
         const ministryFilter = ministryChoiceInstance.getValue(true);
