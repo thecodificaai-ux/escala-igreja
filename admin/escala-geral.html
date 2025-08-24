@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Escala Geral de Ministérios</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5; --secondary-color: #f3f4f6; --text-primary: #1f2937;
+            --text-secondary: #6b7280; --border-color: #e5e7eb; --background: #ffffff;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ); --radius: 12px;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        h1 { text-align: center; color: var(--primary-color); font-weight: 700; font-size: 2.25rem; margin-bottom: 2rem; }
+        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; }
+        .filters-container { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); position: relative; z-index: 20; }
+        .filter-group { position: relative; display: flex; flex-direction: column; }
+        .filter-group label { font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.9rem; }
+        .choices { min-width: 280px; }
+        .choices__inner { background: var(--secondary-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem; }
+        .clear-filter { position: absolute; top: 2.4rem; right: 2rem; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary); z-index: 5; transition: color 0.2s ease; }
+        .clear-filter:hover { color: var(--primary-color); }
+        .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; text-align: left; vertical-align: top; }
+        thead th { background-color: var(--primary-color); color: white; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; font-size: 0.85rem; }
+        thead th:first-child { border-top-left-radius: var(--radius); }
+        thead th:last-child { border-top-right-radius: var(--radius); }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background-color: #f9fafb; }
+        .date-cell { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+        .date-cell small { display: block; font-weight: 400; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem; }
+        .turn-wrapper { margin-bottom: 1.5rem; }
+        .turn-wrapper:last-child { margin-bottom: 0; }
+        .turn-title { font-weight: 600; color: var(--primary-color); font-size: 0.9rem; margin-bottom: 0.75rem; border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; }
+        .volunteer-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+        .volunteer-item { display: flex; align-items: flex-start; gap: 0.5rem; }
+        .role-prefix { background-color: var(--secondary-color); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+        .volunteer-names-wrapper { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+        .volunteer-name { font-size: 0.9rem; position: relative; cursor: pointer; padding: 0.25rem 0.75rem; border-radius: 20px; background: white; border: 1px solid var(--border-color); transition: all 0.2s ease; font-weight: 500; color: var(--text-primary); user-select: none; }
+        .volunteer-name:hover { background: var(--primary-color); color: white; border-color: var(--primary-color); transform: translateY(-1px); z-index: 10; }
+        .highlight { background: #fef3c7 !important; color: #92400e !important; border-color: #fbbF24 !important; }
+        .tooltip { visibility: hidden; position: absolute; top: 50%; left: 105%; transform: translateY(-50%); background: #111827; color: white; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; white-space: nowrap; z-index: 100; opacity: 0; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.5rem; }
+        .volunteer-name:hover .tooltip { visibility: visible; opacity: 1; }
+        .tooltip-pic { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+        #loading-indicator { text-align: center; padding: 4rem; font-size: 1.2rem; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Escala Geral de Ministérios</h1>
+            <a href="/admin" class="button">Voltar ao Dashboard</a>
+        </div>
+        <div id="filters-placeholder"></div>
+        <div id="table-placeholder" class="table-wrapper">
+            <div id="loading-indicator">Carregando escala...</div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+
+        let ministryChoiceInstance, volunteerChoiceInstance, weekdayChoiceInstance;
+        let ministriesList = [];
+
+        function formatTime(dateString) { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); }
+        function formatDate(dateString) { if (!dateString) return { formatted: '', weekday: '' }; const date = new Date(dateString); const day = date.getUTCDate().toString().padStart(2, '0'); const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']; const weekday = weekdays[date.getUTCDay()]; return { formatted: `${day}/${month} - ${weekday.toLowerCase()}`, weekday: weekday }; }
+        function highlightMember(el, memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => { if (item !== el) item.classList.add('highlight'); }); }
+        function removeHighlight(memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => item.classList.remove('highlight')); }
+        function filterByVolunteer(volunteerName) { volunteerChoiceInstance.setChoiceByValue(volunteerName); applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        function clearFilter(filterName) { if (filterName === 'ministry') ministryChoiceInstance.setChoiceByValue('all'); else if (filterName === 'volunteer') volunteerChoiceInstance.setChoiceByValue('all'); else if (filterName === 'weekday') weekdayChoiceInstance.setChoiceByValue('all'); }
+
+        function applyFilters() {
+            const ministryFilter = ministryChoiceInstance.getValue(true);
+            const volunteerFilter = volunteerChoiceInstance.getValue(true);
+            const weekdayFilter = weekdayChoiceInstance.getValue(true);
+            document.querySelectorAll('#schedule-body tr').forEach(row => {
+                let showRow = true;
+                if (weekdayFilter && weekdayFilter !== 'all' && row.getAttribute('data-weekday') !== weekdayFilter) showRow = false;
+                if (volunteerFilter && volunteerFilter !== 'all' && !row.querySelector(`.volunteer-name[data-member-name="${volunteerFilter}"]`)) showRow = false;
+                if (ministryFilter && ministryFilter !== 'all') {
+                    const ministryCell = row.cells[ministriesList.indexOf(ministryFilter) + 1];
+                    if (!ministryCell || ministryCell.innerText.trim() === '') showRow = false;
+                }
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function renderTable(schedules) {
+            const eventosAgrupados = {};
+            schedules.forEach(s => {
+                const eventKey = s.parent_event_id || s.event_id;
+                if (!eventosAgrupados[eventKey]) { eventosAgrupados[eventKey] = { id: eventKey, name: s.parent_event_name || s.event_name, date: new Date(s.event_start_time), turnos: {} }; }
+                if (!eventosAgrupados[eventKey].turnos[s.event_id]) { eventosAgrupados[eventKey].turnos[s.event_id] = { id: s.event_id, name: s.event_name, startTime: s.event_start_time, endTime: s.event_end_time, ministries: {} }; }
+                if (!eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name]) { eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name] = { volunteers: [] }; }
+                eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name].volunteers.push(s);
+            });
+            const sortedEvents = Object.values(eventosAgrupados).sort((a, b) => a.date - b.date);
+            
+            ministriesList = [...new Set(schedules.map(item => item.ministry_name))].sort();
+            const uniqueVolunteers = [...new Set(schedules.map(item => item.member_name))].sort();
+            const uniqueWeekdays = [...new Set(Object.values(sortedEvents).map(event => formatDate(event.date).weekday))];
+            const weekdayOrder = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+            uniqueWeekdays.sort((a, b) => weekdayOrder.indexOf(a) - weekdayOrder.indexOf(b));
+
+            document.getElementById('filters-placeholder').innerHTML = `
+                <div class="filters-container">
+                    <div class="filter-group"><label for="ministry-filter">Filtrar por Ministério</label><select id="ministry-filter"><option value="all">Todos</option>${ministriesList.map(m => `<option value="${m}">${m}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('ministry')">&times;</span></div>
+                    <div class="filter-group"><label for="volunteer-filter">Filtrar por Voluntário</label><select id="volunteer-filter"><option value="all">Todos</option>${uniqueVolunteers.map(v => `<option value="${v}">${v}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('volunteer')">&times;</span></div>
+                    <div class="filter-group"><label for="weekday-filter">Filtrar por Dia</label><select id="weekday-filter"><option value="all">Todos</option>${uniqueWeekdays.map(day => `<option value="${day}">${day}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('weekday')">&times;</span></div>
+                </div>`;
+
+            let headerHTML = '<tr><th>Data</th>';
+            ministriesList.forEach(m => { headerHTML += `<th>${m}</th>`; });
+            headerHTML += '</tr>';
+
+            let rowsHTML = '';
+            sortedEvents.forEach((event) => {
+                const dateInfo = formatDate(event.date);
+                rowsHTML += `<tr data-weekday="${dateInfo.weekday}">`;
+                rowsHTML += `<td class="date-cell">${event.name}<small>${dateInfo.formatted}</small></td>`;
+                ministriesList.forEach(ministryName => {
+                    rowsHTML += '<td>';
+                    const turnosOrdenados = Object.values(event.turnos).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                    turnosOrdenados.forEach(turno => {
+                        const ministryData = turno.ministries[ministryName];
+                        if (ministryData && ministryData.volunteers.length > 0) {
+                            rowsHTML += `<div class="turn-wrapper">`;
+                            if (turnosOrdenados.length > 1) { rowsHTML += `<h4 class="turn-title">${turno.name} (${formatTime(turno.startTime)} - ${formatTime(turno.endTime)})</h4>`; }
+                            rowsHTML += '<ul class="volunteer-list">';
+                            const groupedByRole = ministryData.volunteers.reduce((acc, v) => { (acc[v.role] = acc[v.role] || []).push(v); return acc; }, {});
+                            for (const role in groupedByRole) {
+                                rowsHTML += '<li class="volunteer-item">';
+                                if (role && role !== 'null' && role.toLowerCase().trim() !== ministryName.toLowerCase().trim()) { rowsHTML += `<span class="role-prefix">${role}</span>`; }
+                                const volunteerNamesHTML = groupedByRole[role].map(v => `
+                                    <span class="volunteer-name" data-member-id="${v.member_id}" data-member-name="${v.member_name}" onmouseover="highlightMember(this, '${v.member_id}')" onmouseout="removeHighlight('${v.member_id}')" ondblclick="filterByVolunteer('${v.member_name}')">
+                                        ${v.member_display_name || v.member_name}
+                                        <span class="tooltip">${v.member_photo_url ? `<img src="${v.member_photo_url}" alt="${v.member_name}" class="tooltip-pic">` : ''}<span>${v.member_name}</span></span>
+                                    </span>`).join(' ');
+                                rowsHTML += `<div class="volunteer-names-wrapper">${volunteerNamesHTML}</div></li>`;
+                            }
+                            rowsHTML += '</ul></div>';
+                        }
+                    });
+                    rowsHTML += '</td>';
+                });
+                rowsHTML += '</tr>';
+            });
+
+            document.getElementById('table-placeholder').innerHTML = `<table><thead>${headerHTML}</thead><tbody id="schedule-body">${rowsHTML}</tbody></table>`;
+
+            ministryChoiceInstance = new Choices('#ministry-filter', { searchEnabled: false, itemSelectText: '' });
+            volunteerChoiceInstance = new Choices('#volunteer-filter', { searchPlaceholderValue: 'Pesquisar...', itemSelectText: '' });
+            weekdayChoiceInstance = new Choices('#weekday-filter', { searchEnabled: false, itemSelectText: '' });
+            ministryChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
+            volunteerChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
+            weekdayChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
+        }
+
+        async function main() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = '/login'; return; }
+
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('get-general-schedule');
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    renderTable(data);
+                } else {
+                    document.getElementById('table-placeholder').innerHTML = '<div id="loading-indicator">Nenhuma escala encontrada.</div>';
+                }
+            } catch (error) {
+                console.error("Erro ao carregar a escala:", error);
+                document.getElementById('table-placeholder').innerHTML = `<div id="loading-indicator" style="color: red;">Falha ao carregar a escala: ${error.message}</div>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', main);
+    </script>
+</body>
+</html>
