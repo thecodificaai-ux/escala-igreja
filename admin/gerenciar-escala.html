@@ -222,7 +222,7 @@
     async function removeRequirement(reqId, role) {
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
-            const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', { body: { requirement_id: reqId } });
+            const { error } = await supabaseClient.functions.invoke('remove-vaga', { body: { requirement_id: reqId } });
             if (error) throw error;
             initializePage();
         } catch (error) {
