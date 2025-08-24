@@ -10,7 +10,7 @@
         :root {
             --primary-color: #4f46e5; --secondary-color: #f3f4f6; --text-primary: #1f2937;
             --text-secondary: #6b7280; --border-color: #e5e7eb; --background: #ffffff;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ); --radius: 12px;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1   ); --radius: 12px;
             --error-color: #ef4444;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
@@ -30,6 +30,7 @@
         .requirement-header { display: flex; justify-content: space-between; align-items: center; }
         .requirement-role-group { display: flex; align-items: center; gap: 0.75rem; }
         .requirement-role { font-size: 1.1rem; font-weight: 600; }
+        .requirement-gender { font-size: 0.8rem; color: var(--text-secondary); background-color: var(--secondary-color); padding: 0.2rem 0.5rem; border-radius: 6px; }
         .requirement-slots { font-size: 0.9rem; color: var(--text-secondary); }
         .scaled-list { list-style: none; padding: 0.5rem 0 0 1rem; margin-top: 0.5rem; border-left: 2px solid var(--primary-color); }
         .scaled-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
@@ -37,7 +38,7 @@
         .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
         .add-requirement-form { display: none; padding-top: 1rem; }
-        .form-row { display: flex; gap: 1rem; align-items: center; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
         .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
         
         /* --- ESTILOS DO MODAL --- */
@@ -78,7 +79,7 @@
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
         const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY   );
         let ministryRoles = [];
 
         function formatDate(dateString) {
@@ -116,7 +117,7 @@
                                     <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
                                     <span>${schedule.member.full_name}</span>
                                 </div>
-                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}' )" title="Remover da escala">&times;</button>
+                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}'  )" title="Remover da escala">&times;</button>
                             </li>
                         `).join('');
 
@@ -126,6 +127,7 @@
                                     <div class="requirement-role-group">
                                         <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
                                         <span class="requirement-role">${req.role}</span>
+                                        <span class="requirement-gender">${req.gender}</span>
                                     </div>
                                     <span class="requirement-slots">${slotsText}</span>
                                 </div>
@@ -152,10 +154,13 @@
 
         async function saveRequirement(eventId) {
             const form = document.getElementById(`form-${eventId}`);
-            const roleSelect = form.querySelector('select');
-            const quantityInput = form.querySelector('input');
+            const roleSelect = form.querySelector('.role-select');
+            const quantityInput = form.querySelector('.quantity-input');
+            const genderSelect = form.querySelector('.gender-select'); // ** NOVO: Captura o seletor de gênero **
+            
             const role = roleSelect.value;
             const quantity = quantityInput.value;
+            const gender = genderSelect.value; // ** NOVO: Captura o valor do gênero **
 
             if (!role || !quantity || quantity < 1) {
                 alert('Por favor, selecione uma função e uma quantidade válida.');
@@ -165,13 +170,19 @@
             try {
                 const { error } = await supabaseClient.functions.invoke('create-schedule-requirement', {
                     method: 'POST',
-                    body: JSON.stringify({ event_id: eventId, role: role, quantity_needed: parseInt(quantity) })
+                    body: JSON.stringify({ 
+                        event_id: eventId, 
+                        role: role, 
+                        quantity_needed: parseInt(quantity),
+                        gender: gender // ** NOVO: Envia o gênero para a função **
+                    })
                 });
                 if (error) throw error;
                 
                 toggleAddRequirementForm(eventId);
                 roleSelect.value = '';
                 quantityInput.value = '1';
+                genderSelect.value = 'Ambos'; // Reseta o seletor de gênero
                 fetchRequirements(eventId);
             } catch (error) {
                 alert(`Erro ao salvar vaga: ${error.message}`);
@@ -197,7 +208,7 @@
                             <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="scaled-pic">
                             <span>${v.full_name}</span>
                         </li>
-                    ` ).join('');
+                    `  ).join('');
                 }
             } catch (error) {
                 modalList.innerHTML = `<li>Erro ao buscar voluntários: ${error.message}</li>`;
@@ -228,34 +239,29 @@
             if (!confirm(`Tem certeza que deseja remover ${volunteerName} da escala?`)) {
                 return;
             }
-
             try {
                 const { error } = await supabaseClient.functions.invoke('delete-schedule', {
                     method: 'DELETE',
                     body: JSON.stringify({ schedule_id: scheduleId })
                 });
                 if (error) throw error;
-
                 loadPage(true);
             } catch (error) {
                 alert(`Erro ao remover voluntário: ${error.message}`);
             }
         }
 
-        // --- NOVA FUNÇÃO PARA REMOVER VAGA ---
         async function removeRequirement(requirementId, roleName) {
             if (!confirm(`Tem certeza que deseja remover a vaga de "${roleName}"?\n\nATENÇÃO: Todos os voluntários já escalados para esta vaga também serão removidos.`)) {
                 return;
             }
-
             try {
                 const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', {
                     method: 'DELETE',
                     body: JSON.stringify({ requirement_id: requirementId })
                 });
                 if (error) throw error;
-
-                loadPage(true); // Recarrega a visualização
+                loadPage(true);
             } catch (error) {
                 alert(`Erro ao remover vaga: ${error.message}`);
             }
@@ -293,11 +299,17 @@
                             <div class="event-body">
                                 <ul class="requirements-list"><li>Carregando vagas...</li></ul>
                                 <div class="add-requirement-form form-row" id="form-${event.id}" style="display: none;">
-                                    <select>
+                                    <select class="role-select">
                                         <option value="">Selecione a função</option>
                                         ${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}
                                     </select>
-                                    <input type="number" min="1" value="1" style="width: 60px;">
+                                    <input type="number" min="1" value="1" style="width: 60px;" class="quantity-input">
+                                    <!-- ** NOVO SELETOR DE GÊNERO ** -->
+                                    <select class="gender-select">
+                                        <option value="Ambos">Ambos</option>
+                                        <option value="Masculino">Masculino</option>
+                                        <option value="Feminino">Feminino</option>
+                                    </select>
                                     <button class="button" onclick="saveRequirement('${event.id}')">Salvar</button>
                                 </div>
                             </div>
