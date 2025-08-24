@@ -100,9 +100,17 @@
             const eventosAgrupados = {};
             schedules.forEach(s => {
                 const eventKey = s.parent_event_id || s.event_id;
-                if (!eventosAgrupados[eventKey]) { eventosAgrupados[eventKey] = { id: eventKey, name: s.parent_event_name || s.event_name, date: new Date(s.event_start_time), turnos: {} }; }
-                if (!eventosAgrupados[eventKey].turnos[s.event_id]) { eventosAgrupados[eventKey].turnos[s.event_id] = { id: s.event_id, name: s.event_name, startTime: s.event_start_time, endTime: s.event_end_time, ministries: {} }; }
-                if (!eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name]) { eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name] = { volunteers: [] }; }
+                if (!eventosAgrupados[eventKey]) { 
+                    // ** CORREÇÃO APLICADA AQUI **
+                    // Usa s.start_time que agora existe na VIEW
+                    eventosAgrupados[eventKey] = { id: eventKey, name: s.parent_event_name || s.event_name, date: new Date(s.start_time), turnos: {} }; 
+                }
+                if (!eventosAgrupados[eventKey].turnos[s.event_id]) { 
+                    eventosAgrupados[eventKey].turnos[s.event_id] = { id: s.event_id, name: s.event_name, startTime: s.start_time, endTime: s.end_time, ministries: {} }; 
+                }
+                if (!eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name]) { 
+                    eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name] = { volunteers: [] }; 
+                }
                 eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name].volunteers.push(s);
             });
             const sortedEvents = Object.values(eventosAgrupados).sort((a, b) => a.date - b.date);
