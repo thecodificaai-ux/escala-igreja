@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <!-- ... (toda a seção <head> e <style> permanece exatamente a mesma) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard do Líder</title>
@@ -21,15 +22,11 @@
         h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
         .header-actions .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background-color 0.2s ease; }
         .header-actions .button:hover { background-color: var(--primary-dark); }
-        
-        /* Estilos dos Widgets */
         .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
         .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
         .widget-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
         .widget-chart { position: relative; height: 300px; }
-
-        /* Estilos da Tabela */
         .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; text-align: left; vertical-align: middle; }
@@ -49,14 +46,13 @@
     </div>
 
     <div id="main-content" class="container" style="display: none;">
+        <!-- ... (o resto do HTML do container principal permanece o mesmo) ... -->
         <div class="header">
             <h1 id="ministry-name-title">Dashboard do Líder</h1>
             <div class="header-actions">
                 <a href="/escala" class="button">Ver Escala Pública</a>
             </div>
         </div>
-
-        <!-- Widgets de Destaque (KPIs) -->
         <div class="widgets-grid">
             <div class="widget">
                 <h2 class="widget-title">Voluntários Ativos</h2>
@@ -71,8 +67,6 @@
                 <p class="widget-value" id="kpi-next-event">--</p>
             </div>
         </div>
-
-        <!-- Gráfico e Tabela -->
         <div class="widgets-grid">
             <div class="widget" style="grid-column: 1 / -1;">
                 <h2 class="widget-title">Distribuição de Notas de Aptidão</h2>
@@ -100,14 +94,12 @@
     </div>
 
     <script>
-        // **CHAVE ATUALIZADA**
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-        
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-        let scoreChart = null; // Variável global para a instância do gráfico
+        let scoreChart = null;
 
         async function checkAuth() {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -132,22 +124,40 @@
             }
         }
 
+        // **FUNÇÃO CORRIGIDA**
         async function fetchAndBuildDashboard(ministryId) {
             try {
-                // A chamada da Edge Function agora usa o método GET e passa o ministry_id como parâmetro na URL
-                const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
-
-                if (error) throw error;
+                // Construímos a URL completa da função
+                const functionUrl = `${SUPABASE_URL}/functions/v1/get-ministry-members?ministry_id=${ministryId}`;
                 
-                // Preencher KPIs
+                // Pegamos a sessão atual para obter o token de autenticação
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) throw new Error("Sessão de usuário não encontrada.");
+
+                // Usamos o 'fetch' nativo, passando o token no cabeçalho de autorização
+                const response = await fetch(functionUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
+
+                // Verificamos se a resposta da função foi bem-sucedida
+                if (!response.ok) {
+                    // Se não foi, tentamos ler o erro que a função retornou
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `A função retornou o status ${response.status}`);
+                }
+
+                // Se foi bem-sucedida, processamos os dados
+                const data = await response.json();
+                
                 document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
                 document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
                 document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
 
-                // Renderizar Tabela
                 buildManagementTable(data.volunteers);
-
-                // Renderizar Gráfico
                 buildScoreChart(data.charts.scoreDistribution);
 
             } catch (error) {
@@ -198,26 +208,19 @@
                     borderRadius: 5
                 }]
             };
-
-            if(scoreChart) {
-                scoreChart.destroy(); // Destrói o gráfico antigo antes de criar um novo
-            }
-
+            if(scoreChart) { scoreChart.destroy(); }
             scoreChart = new Chart(ctx, {
                 type: 'bar',
                 data: chartData,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                    },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
                     plugins: { legend: { display: false } }
                 }
             });
         }
 
-        // Função de simulação, como combinado
         function updateLeaderScore(memberMinistryId, newScore) {
             console.log(`(Simulação) Atualizando ID ${memberMinistryId} para a nota ${newScore}`);
         }
