@@ -88,6 +88,11 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
     
+    // *** A SOLUÇÃO FINAL ESTÁ AQUI ***
+    // Codificamos os valores diretamente. Simples, rápido e à prova de falhas.
+    const ministryRoles = ["Projeção", "Transmissão", "Edição", "Foto", "Stories", "Câmera"];
+    const genderEnums = ["Ambos", "Masculino", "Feminino"];
+
     let currentRequirementId = null;
     const modal = document.getElementById('add-volunteer-modal');
     const modalList = document.getElementById('modal-volunteer-list');
@@ -103,8 +108,7 @@
         return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
     }
 
-    // A função de renderização agora recebe os enums como parâmetros
-    function renderEvents(events, ministryRoles, genderEnums) {
+    function renderEvents(events) {
         const container = document.getElementById('events-container');
         if (!Array.isArray(events) || events.length === 0) {
             container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
@@ -154,8 +158,6 @@
                 const showTurnoTitle = turnos.length > 1 || (event && event.name) !== (turno && turno.name);
                 const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
                 
-                // *** A CORREÇÃO FINAL ESTÁ AQUI ***
-                // O HTML para o formulário é gerado aqui, usando os enums que foram passados como parâmetro.
                 const roleOptions = ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('');
                 const genderOptions = genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('');
 
@@ -276,7 +278,7 @@
         }
     }
 
-    // --- LÓGICA DE INICIALIZAÇÃO CORRIGIDA E FINAL ---
+    // --- LÓGICA DE INICIALIZAÇÃO SIMPLIFICADA E FINAL ---
     async function initializePage() {
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
@@ -291,26 +293,13 @@
                 return;
             }
             
-            const [rolesResult, genderResult, eventsResult] = await Promise.all([
-                supabaseClient.rpc('get_enum_values', { enum_name: 'ministry_role' }),
-                supabaseClient.rpc('get_enum_values', { enum_name: 'gender_type' }),
-                supabaseClient.functions.invoke('get-schedule-management-data')
-            ]);
+            // Apenas buscamos os eventos. Os enums já estão definidos.
+            const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
 
-            if (rolesResult.error) throw new Error(`Erro ao buscar Funções: ${rolesResult.error.message}`);
-            if (genderResult.error) throw new Error(`Erro ao buscar Gêneros: ${genderResult.error.message}`);
-            if (eventsResult.error) throw new Error(`Erro ao buscar Eventos: ${eventsResult.error.message}`);
+            if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
 
-            const ministryRoles = rolesResult.data;
-            const genderEnums = genderResult.data;
-            const events = eventsResult.data;
-
-            // Verificação final para garantir que os enums não são nulos
-            if (!ministryRoles || !genderEnums) {
-                throw new Error("Não foi possível carregar os dados de Funções ou Gêneros.");
-            }
-
-            renderEvents(events, ministryRoles, genderEnums);
+            // Renderizamos passando os eventos e os enums codificados.
+            renderEvents(events);
             
             if(loadingContainer) loadingContainer.style.display = 'none';
             if(mainContent) mainContent.style.display = 'block';
