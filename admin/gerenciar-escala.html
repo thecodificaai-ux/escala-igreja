@@ -125,7 +125,7 @@
 
             try {
                 // Busca os papéis (roles) do ENUM para popular os dropdowns
-                const { data: rolesData, error: rolesError } = await supabaseClient.rpc('get_enum_values', { enum_name: 'role_enum' });
+                const { data: rolesData, error: rolesError } = await supabaseClient.rpc('get_role_enum_values');
                 if (rolesError) throw rolesError;
                 ministryRoles = rolesData;
 
