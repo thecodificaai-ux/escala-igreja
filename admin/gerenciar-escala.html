@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* SEUS ESTILOS CSS PERMANECEM OS MESMOS - NENHUMA ALTERAÇÃO AQUI */
+        /* SEUS ESTILOS CSS PERMANECEM OS MESMOS */
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
@@ -86,8 +86,7 @@
 <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
     
     let currentRequirementId = null;
     const modal = document.getElementById('add-volunteer-modal');
@@ -155,6 +154,11 @@
                 const showTurnoTitle = turnos.length > 1 || (event && event.name) !== (turno && turno.name);
                 const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
                 
+                // *** A CORREÇÃO FINAL ESTÁ AQUI ***
+                // O HTML para o formulário é gerado aqui, usando os enums que foram passados como parâmetro.
+                const roleOptions = ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('');
+                const genderOptions = genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('');
+
                 return `
                     <div class="turn-wrapper">
                         <div class="turn-header">
@@ -163,8 +167,8 @@
                         </div>
                         <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida.</li>'}</ul>
                         <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
-                            <select id="role-select-${turno.id}">${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}</select>
-                            <select id="gender-select-${turno.id}">${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}</select>
+                            <select id="role-select-${turno.id}">${roleOptions}</select>
+                            <select id="gender-select-${turno.id}">${genderOptions}</select>
                             <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
                             <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
                         </div>
@@ -206,14 +210,13 @@
                 body: { event_id: turnId, role, gender, quantity_needed: parseInt(quantity) }
             });
             if (error) throw error;
-            initializePage(); // Reinicia a página para mostrar os dados atualizados
+            initializePage();
         } catch (error) {
             alert(`Erro ao salvar vaga: ${error.message}`);
             button.disabled = false;
             button.textContent = 'Salvar';
         }
     }
-    // ... (outras funções de interação permanecem as mesmas) ...
     async function removeRequirement(reqId, role) {
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
@@ -278,39 +281,37 @@
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
         
-        // Garante que o conteúdo principal esteja escondido e o loading visível
         if(mainContent) mainContent.style.display = 'none';
         if(loadingContainer) loadingContainer.style.display = 'block';
 
         try {
-            // 1. Autenticar
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.href = '/login';
                 return;
             }
             
-            // 2. Buscar TODOS os dados necessários em paralelo
             const [rolesResult, genderResult, eventsResult] = await Promise.all([
                 supabaseClient.rpc('get_enum_values', { enum_name: 'ministry_role' }),
                 supabaseClient.rpc('get_enum_values', { enum_name: 'gender_type' }),
                 supabaseClient.functions.invoke('get-schedule-management-data')
             ]);
 
-            // 3. Verificar erros em CADA chamada
             if (rolesResult.error) throw new Error(`Erro ao buscar Funções: ${rolesResult.error.message}`);
             if (genderResult.error) throw new Error(`Erro ao buscar Gêneros: ${genderResult.error.message}`);
             if (eventsResult.error) throw new Error(`Erro ao buscar Eventos: ${eventsResult.error.message}`);
 
-            // 4. Se tudo deu certo, extrair os dados
             const ministryRoles = rolesResult.data;
             const genderEnums = genderResult.data;
             const events = eventsResult.data;
 
-            // 5. SÓ AGORA, com todos os dados em mãos, chamar a renderização
+            // Verificação final para garantir que os enums não são nulos
+            if (!ministryRoles || !genderEnums) {
+                throw new Error("Não foi possível carregar os dados de Funções ou Gêneros.");
+            }
+
             renderEvents(events, ministryRoles, genderEnums);
             
-            // 6. Esconder o loading e mostrar o conteúdo
             if(loadingContainer) loadingContainer.style.display = 'none';
             if(mainContent) mainContent.style.display = 'block';
 
