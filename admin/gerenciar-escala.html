@@ -68,7 +68,8 @@
         async function fetchRequirements(eventId) {
             const listEl = document.querySelector(`.event-card[data-event-id="${eventId}"] .requirements-list`);
             try {
-                const { data, error } = await supabaseClient.functions.invoke(`manage-schedule-requirements?event_id=${eventId}`);
+                // **CHAMANDO A NOVA FUNÇÃO GET**
+                const { data, error } = await supabaseClient.functions.invoke(`get-schedule-requirements?event_id=${eventId}`);
                 if (error) throw error;
 
                 if (!listEl) return;
@@ -128,7 +129,8 @@
             }
 
             try {
-                const { error } = await supabaseClient.functions.invoke('manage-schedule-requirements', {
+                // **CHAMANDO A NOVA FUNÇÃO POST**
+                const { error } = await supabaseClient.functions.invoke('create-schedule-requirement', {
                     method: 'POST',
                     body: JSON.stringify({ 
                         event_id: eventId, 
@@ -156,6 +158,7 @@
                 if (rolesError) throw rolesError;
                 ministryRoles = rolesData;
 
+                // A função que busca os eventos não precisa mudar
                 const { data: events, error: eventsError } = await supabaseClient.functions.invoke('get-monthly-events-for-leader');
                 if (eventsError) throw eventsError;
 
