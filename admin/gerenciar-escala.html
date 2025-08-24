@@ -65,9 +65,6 @@
             return `${day}/${month}/${year} (${weekday})`;
         }
 
-        // =================================================================
-        //  ** FUNÇÃO fetchRequirements TOTALMENTE REFEITA **
-        // =================================================================
         async function fetchRequirements(eventId) {
             const listEl = document.querySelector(`.event-card[data-event-id="${eventId}"] .requirements-list`);
             try {
@@ -133,7 +130,11 @@
             try {
                 const { error } = await supabaseClient.functions.invoke('manage-schedule-requirements', {
                     method: 'POST',
-                    body: { event_id: eventId, role: role, quantity_needed: parseInt(quantity) }
+                    body: JSON.stringify({ 
+                        event_id: eventId, 
+                        role: role, 
+                        quantity_needed: parseInt(quantity) 
+                    })
                 });
                 if (error) throw error;
                 
