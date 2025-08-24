@@ -125,13 +125,13 @@
                                     <div class="requirement-role-group">
                                         <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
                                         <span class="requirement-role">${req.role}</span>
-                                        <span class="requirement-gender">${req.gender}</span>
+                                        <span class="requirement-gender">${req.gender || 'Ambos'}</span>
                                     </div>
                                     <span class="requirement-slots">${slotsText}</span>
                                 </div>
                                 ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
                                 <div style="text-align: right; margin-top: 0.5rem;">
-                                    <button class="button secondary" onclick="openModal('${req.id}', '${eventId}', '${req.role}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
+                                    <button class="button secondary" onclick="openModal('${req.id}', '${eventId}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
                                 </div>
                             </li>
                         `;
@@ -177,17 +177,14 @@
                 });
                 if (error) throw error;
                 
-                // ** CORREÇÃO APLICADA AQUI **
-                // Em vez de apenas esconder o formulário, forçamos o recarregamento
-                // da lista de vagas daquele evento para refletir a nova adição.
                 fetchRequirements(eventId);
-                toggleAddRequirementForm(eventId); // Esconde o formulário depois de recarregar
+                toggleAddRequirementForm(eventId);
             } catch (error) {
                 alert(`Erro ao salvar vaga: ${error.message}`);
             }
         }
 
-        async function openModal(requirementId, eventId, role) {
+        async function openModal(requirementId, eventId, role, gender) { // ** gender ADICIONADO **
             const modal = document.getElementById('add-volunteer-modal');
             const modalList = document.getElementById('modal-volunteer-list');
             document.getElementById('modal-title').textContent = `Adicionar para: ${role}`;
@@ -195,7 +192,8 @@
             modalList.innerHTML = '<li>Buscando voluntários...</li>';
 
             try {
-                const { data, error } = await supabaseClient.functions.invoke(`get-available-volunteers?event_id=${eventId}&role=${role}`);
+                // ** gender ENVIADO COMO PARÂMETRO **
+                const { data, error } = await supabaseClient.functions.invoke(`get-available-volunteers?event_id=${eventId}&role=${role}&gender=${gender}`);
                 if (error) throw error;
 
                 if (data.length === 0) {
@@ -225,8 +223,6 @@
                 });
                 if (error) throw error;
                 closeModal();
-                // ** CORREÇÃO APLICADA AQUI **
-                // Força o recarregamento de toda a página para garantir consistência.
                 loadPage(true); 
             } catch (error) {
                 alert(`Erro ao escalar voluntário: ${error.message}`);
@@ -262,9 +258,6 @@
         }
 
         async function loadPage(isReload = false) {
-            // ** CORREÇÃO APLICADA AQUI **
-            // Se for um recarregamento, limpa o container de eventos para
-            // garantir que a lista seja reconstruída do zero.
             if (isReload) {
                 document.getElementById('events-container').innerHTML = '<li>Recarregando...</li>';
             } else {
