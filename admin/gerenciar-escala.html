@@ -11,18 +11,24 @@
             --primary-color: #4f46e5; --secondary-color: #f3f4f6; --text-primary: #1f2937;
             --text-secondary: #6b7280; --border-color: #e5e7eb; --background: #ffffff;
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ); --radius: 12px;
+            --success-color: #10b981; --error-color: #ef4444;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         h1 { font-weight: 700; font-size: 2.25rem; }
-        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; }
+        .button.secondary { background-color: var(--text-secondary); }
         .events-container { display: flex; flex-direction: column; gap: 1.5rem; }
         .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 1.5rem; }
         .event-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
         .event-title { font-size: 1.5rem; font-weight: 600; margin: 0; }
         .event-date { font-size: 1rem; font-weight: 500; color: var(--primary-color); }
-        .event-body { /* Espaço para as vagas e voluntários no futuro */ }
+        .requirements-list { list-style: none; padding: 0; margin: 0; }
+        .requirement-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--secondary-color); }
+        .add-requirement-form { display: none; padding-top: 1rem; }
+        .form-row { display: flex; gap: 1rem; align-items: center; }
+        .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
@@ -32,16 +38,14 @@
             <h1>Gerenciar Escalas do Mês</h1>
             <a href="/admin" class="button">Voltar ao Dashboard</a>
         </div>
-        <div id="events-container" class="events-container">
-            <!-- Eventos serão inseridos aqui pelo JavaScript -->
-        </div>
+        <div id="events-container" class="events-container"></div>
     </div>
-
     <script>
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+        let ministryRoles = []; // Armazenaremos as funções (roles) aqui
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -55,43 +59,115 @@
             return `${day}/${month}/${year} (${weekday})`;
         }
 
+        async function fetchRequirements(eventId) {
+            const { data, error } = await supabaseClient.functions.invoke(`manage-schedule-requirements?event_id=${eventId}`);
+            if (error) { 
+                console.error(`Erro ao buscar vagas para o evento ${eventId}:`, error); 
+                const listEl = document.querySelector(`.event-card[data-event-id="${eventId}"] .requirements-list`);
+                if (listEl) listEl.innerHTML = '<li>Erro ao carregar vagas.</li>';
+                return; 
+            }
+            
+            const listEl = document.querySelector(`.event-card[data-event-id="${eventId}"] .requirements-list`);
+            if (!listEl) return;
+
+            if (data.length === 0) {
+                listEl.innerHTML = '<li>Nenhuma vaga definida para seu ministério neste evento.</li>';
+            } else {
+                listEl.innerHTML = data.map(req => `
+                    <li class="requirement-item" data-req-id="${req.id}">
+                        <span><strong>${req.quantity_needed}x</strong> ${req.role}</span>
+                        <button class="button secondary" style="padding: 0.4rem 0.8rem;">Ver Voluntários</button>
+                    </li>
+                `).join('');
+            }
+        }
+
+        function toggleAddRequirementForm(eventId) {
+            const form = document.getElementById(`form-${eventId}`);
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+            }
+        }
+
+        async function saveRequirement(eventId) {
+            const form = document.getElementById(`form-${eventId}`);
+            const roleSelect = form.querySelector('select');
+            const quantityInput = form.querySelector('input');
+            
+            const role = roleSelect.value;
+            const quantity = quantityInput.value;
+
+            if (!role || !quantity || quantity < 1) {
+                alert('Por favor, selecione uma função e uma quantidade válida.');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.functions.invoke('manage-schedule-requirements', {
+                    method: 'POST',
+                    body: { event_id: eventId, role: role, quantity_needed: parseInt(quantity) }
+                });
+                if (error) throw error;
+                
+                toggleAddRequirementForm(eventId); // Esconde o formulário
+                roleSelect.value = ''; // Limpa o formulário
+                quantityInput.value = '1';
+                fetchRequirements(eventId); // Recarrega a lista de vagas
+            } catch (error) {
+                alert(`Erro ao salvar vaga: ${error.message}`);
+            }
+        }
+
         async function loadPage() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = '/login'; return; }
 
             try {
-                const { data: events, error } = await supabaseClient.functions.invoke('get-monthly-events-for-leader');
-                if (error) throw error;
+                // Busca os papéis (roles) do ENUM para popular os dropdowns
+                const { data: rolesData, error: rolesError } = await supabaseClient.rpc('get_enum_values', { enum_name: 'role_enum' });
+                if (rolesError) throw rolesError;
+                ministryRoles = rolesData;
+
+                const { data: events, error: eventsError } = await supabaseClient.functions.invoke('get-monthly-events-for-leader');
+                if (eventsError) throw eventsError;
 
                 const container = document.getElementById('events-container');
                 if (events.length === 0) {
-                    container.innerHTML = '<p>Nenhum evento para seu ministério encontrado este mês.</p>';
+                    container.innerHTML = '<p>Nenhum evento encontrado para o mês atual.</p>';
                 } else {
-                    let html = '';
-                    events.forEach(event => {
-                        html += `
-                            <div class="event-card" data-event-id="${event.id}">
-                                <div class="event-header">
-                                    <div>
-                                        <h2 class="event-title">${event.name}</h2>
-                                        <p class="event-date">${formatDate(event.event_date)}</p>
-                                    </div>
-                                    <button class="button">Adicionar Vaga</button>
+                    container.innerHTML = events.map(event => `
+                        <div class="event-card" data-event-id="${event.id}">
+                            <div class="event-header">
+                                <div>
+                                    <h2 class="event-title">${event.name}</h2>
+                                    <p class="event-date">${formatDate(event.event_date)}</p>
                                 </div>
-                                <div class="event-body">
-                                    <p><i>Vagas e voluntários aparecerão aqui...</i></p>
+                                <button class="button" onclick="toggleAddRequirementForm('${event.id}')">Adicionar Vaga</button>
+                            </div>
+                            <div class="event-body">
+                                <ul class="requirements-list"><li>Carregando vagas...</li></ul>
+                                <div class="add-requirement-form form-row" id="form-${event.id}" style="display: none;">
+                                    <select>
+                                        <option value="">Selecione a função</option>
+                                        ${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}
+                                    </select>
+                                    <input type="number" min="1" value="1" style="width: 60px;">
+                                    <button class="button" onclick="saveRequirement('${event.id}')">Salvar</button>
                                 </div>
                             </div>
-                        `;
-                    });
-                    container.innerHTML = html;
+                        </div>
+                    `).join('');
                 }
 
                 document.getElementById('loading-container').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
 
+                // Após renderizar os cards, busca as vagas para cada um
+                events.forEach(event => fetchRequirements(event.id));
+
             } catch (error) {
-                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro ao carregar eventos: ${error.message}</p>`;
+                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro ao carregar página: ${error.message}</p>`;
             }
         }
 
@@ -99,3 +175,4 @@
     </script>
 </body>
 </html>
+
