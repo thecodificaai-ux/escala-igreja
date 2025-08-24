@@ -181,7 +181,7 @@
                     </div>
                 `;
             }).join('');
-            container.innerHTML = container.innerHTML = events.length > 0 ? html : '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
+            // LINHA CORRIGIDA const finalHTML = events.map(event => {     // ... todo o código do .map que já está lá ...     const turnosHTML = event.turnos.map(turno => {         // ...     }).join('');      return `         <div class="event-card" data-event-id="${event.id}">             // ...             <div class="event-body">                 ${turnosHTML}                 // ...             </div>         </div>     `; }).join('');  container.innerHTML = events.length > 0 ? finalHTML : '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
         }
 
         function toggleAddRequirementForm(eventId) {
