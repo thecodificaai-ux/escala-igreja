@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <!-- ... (a seção <head> e <style> tem pequenas alterações) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard do Líder</title>
@@ -21,17 +20,13 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
         .header-actions .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
-        
         .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
         .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
         .widget-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
         .widget-chart { position: relative; height: 300px; width: 100%; }
-
-        /* **NOVO LAYOUT PARA OS GRÁFICOS** */
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
         @media (max-width: 900px) { .charts-container { grid-template-columns: 1fr; } }
-
         .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; text-align: left; vertical-align: middle; white-space: nowrap; }
@@ -62,13 +57,10 @@
             <div class="widget"><h2 class="widget-title">Indisponíveis (30d)</h2><p class="widget-value" id="kpi-unavailable-count">--</p></div>
             <div class="widget"><h2 class="widget-title">Próximo Evento</h2><p class="widget-value" id="kpi-next-event" style="font-size: 1.8rem;">--</p></div>
         </div>
-        
-        <!-- **NOVO CONTAINER PARA OS GRÁFICOS** -->
         <div class="charts-container">
             <div class="widget"><h2 class="widget-title">Níveis de Aptidão do Time</h2><div class="widget-chart"><canvas id="aptitude-chart"></canvas></div></div>
             <div class="widget"><h2 class="widget-title">Carga de Trabalho (Mês Atual)</h2><div class="widget-chart"><canvas id="monthly-load-chart"></canvas></div></div>
         </div>
-
         <div class="table-wrapper">
             <h2 class="widget-title" style="padding: 1.5rem 1.5rem 0;">Gerenciamento de Voluntários</h2>
             <table>
@@ -83,10 +75,25 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
         let aptitudeChart = null;
-        let monthlyLoadChart = null; // Variável para o novo gráfico
+        let monthlyLoadChart = null;
         let currentMinistryId = null;
 
-        async function checkAuth() { /* ... (sem alterações) ... */ }
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = '/login'; return; }
+            try {
+                const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
+                if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
+                const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
+                if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
+                currentMinistryId = ministryData.id;
+                document.getElementById('loading-container').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
+                fetchAndBuildDashboard(currentMinistryId);
+            } catch (error) { document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`; }
+        }
+
         async function fetchAndBuildDashboard(ministryId) {
             try {
                 const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
@@ -97,7 +104,7 @@
                 document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
                 buildManagementTable(data.volunteers);
                 buildAptitudeChart(data.charts.aptitudeDistribution);
-                buildMonthlyLoadChart(data.charts.monthlyLoadDistribution); // Chama a nova função
+                buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
             } catch (error) { document.getElementById('main-content').innerHTML = `<p style="color: red;">Falha ao carregar dados: ${error.message}</p>`; }
         }
 
@@ -131,9 +138,24 @@
             managementBody.innerHTML = rowsHTML;
         }
 
-        function buildAptitudeChart(distributionData) { /* ... (sem alterações) ... */ }
+        function buildAptitudeChart(distributionData) {
+            const ctx = document.getElementById('aptitude-chart').getContext('2d');
+            if (aptitudeChart) aptitudeChart.destroy();
+            aptitudeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(distributionData),
+                    datasets: [{
+                        label: 'Nº de Voluntários',
+                        data: Object.values(distributionData),
+                        backgroundColor: ['#16a34a', '#4f46e5', '#f59e0b', '#ef4444'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            });
+        }
 
-        // **NOVA FUNÇÃO PARA O GRÁFICO DE CARGA MENSAL**
         function buildMonthlyLoadChart(distributionData) {
             const ctx = document.getElementById('monthly-load-chart').getContext('2d');
             if (monthlyLoadChart) monthlyLoadChart.destroy();
@@ -151,7 +173,7 @@
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Gráfico de barras horizontais
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
@@ -160,44 +182,7 @@
             });
         }
 
-        async function updateLeaderScore(memberMinistryId, newScoreString) { /* ... (sem alterações) ... */ }
-        function showToast(message, type = 'success') { /* ... (sem alterações) ... */ }
-        
-        // Copiando as funções que sumiram no resumo
-        document.addEventListener('DOMContentLoaded', checkAuth);
-        checkAuth = async function() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { window.location.href = '/login'; return; }
-            try {
-                const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
-                if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
-                const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
-                if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
-                currentMinistryId = ministryData.id;
-                document.getElementById('loading-container').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
-                fetchAndBuildDashboard(currentMinistryId);
-            } catch (error) { document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`; }
-        }
-        buildAptitudeChart = function(distributionData) {
-            const ctx = document.getElementById('aptitude-chart').getContext('2d');
-            if (aptitudeChart) aptitudeChart.destroy();
-            aptitudeChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(distributionData),
-                    datasets: [{
-                        label: 'Nº de Voluntários',
-                        data: Object.values(distributionData),
-                        backgroundColor: ['#16a34a', '#4f46e5', '#f59e0b', '#ef4444'],
-                        hoverOffset: 4
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-            });
-        }
-        updateLeaderScore = async function(memberMinistryId, newScoreString) {
+        async function updateLeaderScore(memberMinistryId, newScoreString) {
             const newScore = parseFloat(newScoreString);
             if (isNaN(newScore) || newScore < 0 || newScore > 10) { showToast('Nota inválida.', 'error'); return; }
             try {
@@ -207,7 +192,8 @@
                 fetchAndBuildDashboard(currentMinistryId);
             } catch (error) { showToast(`Erro: ${error.context?.json?.error || error.message}`, 'error'); }
         }
-        showToast = function(message, type = 'success') {
+
+        function showToast(message, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `feedback-toast ${type}`;
             toast.textContent = message;
@@ -218,6 +204,8 @@
                 setTimeout(() => document.body.removeChild(toast), 500);
             }, 4000);
         }
+
+        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>
