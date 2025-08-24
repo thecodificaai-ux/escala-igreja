@@ -320,6 +320,7 @@ function renderEvents(events) {
     async function loadPageData() {
         try {
             const { data, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
+            console.log(JSON.stringify(data, null, 2)); 
             if (error) throw error;
             renderEvents(data);
         } catch (error) {
