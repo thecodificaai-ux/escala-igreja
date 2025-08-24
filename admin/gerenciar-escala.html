@@ -88,14 +88,12 @@
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
     
-    // --- Variáveis Globais ---
     let ministryRoles = [];
     let genderEnums = [];
     let currentRequirementId = null;
     const modal = document.getElementById('add-volunteer-modal');
     const modalList = document.getElementById('modal-volunteer-list');
 
-    // --- Funções de Formatação ---
     function formatTime(dateString) {
         if (!dateString) return '';
         return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
@@ -107,103 +105,100 @@
         return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
     }
 
-// SUBSTITUA A FUNÇÃO renderEvents INTEIRA PELA VERSÃO CORRIGIDA E MAIS ROBUSTA
+    // --- FUNÇÃO DE RENDERIZAÇÃO "À PROVA DE BALAS" ---
+    function renderEvents(events) {
+        const container = document.getElementById('events-container');
+        
+        // NÍVEL 1 DE DEFESA: Garante que 'events' seja um array.
+        if (!Array.isArray(events) || events.length === 0) {
+            container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
+            return;
+        }
 
-function renderEvents(events) {
-    const container = document.getElementById('events-container');
-    // Verificação #1: Garante que 'events' seja um array.
-    if (!Array.isArray(events) || events.length === 0) {
-        container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
-        return;
-    }
-
-    const finalHTML = events.map(event => {
-        // Verificação #2: Garante que 'turnos' seja sempre um array antes de usar .map()
-        const turnos = Array.isArray(event.turnos) ? event.turnos : []; 
-        const turnosHTML = turnos.map(turno => {
+        const finalHTML = events.map(event => {
+            // NÍVEL 2 DE DEFESA: Garante que 'event' seja um objeto e 'turnos' seja um array.
+            const turnos = (event && Array.isArray(event.turnos)) ? event.turnos : [];
             
-            // Verificação #3: Garante que 'requirements' seja sempre um array.
-            const requirements = Array.isArray(turno.requirements) ? turno.requirements : [];
-            const requirementsHTML = requirements.map(req => {
+            const turnosHTML = turnos.map(turno => {
+                // NÍVEL 3 DE DEFESA: Garante que 'turno' seja um objeto e 'requirements' seja um array.
+                const requirements = (turno && Array.isArray(turno.requirements)) ? turno.requirements : [];
                 
-                // Verificação #4: Garante que 'schedules' também seja um array.
-                const schedules = Array.isArray(req.schedules) ? req.schedules : [];
-                const scaledCount = schedules.length;
-                const neededCount = req.quantity_needed;
-                const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
-                const isFull = scaledCount >= neededCount;
+                const requirementsHTML = requirements.map(req => {
+                    // NÍVEL 4 DE DEFESA: Garante que 'req' seja um objeto e 'schedules' seja um array.
+                    const schedules = (req && Array.isArray(req.schedules)) ? req.schedules : [];
+                    
+                    const scaledCount = schedules.length;
+                    const neededCount = req.quantity_needed || 0;
+                    const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
+                    const isFull = scaledCount >= neededCount;
 
-                const scaledVolunteersHTML = schedules.map(schedule => `
-                    <li class="scaled-item">
-                        <div class="scaled-info">
-                            <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
-                            <span>${schedule.member.full_name}</span>
-                        </div>
-                        <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}'  )" title="Remover da escala">&times;</button>
-                    </li>
-                `).join('');
+                    const scaledVolunteersHTML = schedules.map(schedule => {
+                        const member = schedule.member || {};
+                        return `
+                            <li class="scaled-item">
+                                <div class="scaled-info">
+                                    <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'Nome não encontrado'}" class="scaled-pic">
+                                    <span>${member.full_name || 'Nome não encontrado'}</span>
+                                </div>
+                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}' )" title="Remover da escala">&times;</button>
+                            </li>`;
+                    }).join('');
 
-                return `
-                    <li class="requirement-item" data-req-id="${req.id}">
-                        <div class="requirement-header">
-                            <div class="requirement-role-group">
-                                <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
-                                <span class="requirement-role">${req.role}</span>
-                                <span class="gender-badge">${req.gender}</span>
+                    return `
+                        <li class="requirement-item" data-req-id="${req.id}">
+                            <div class="requirement-header">
+                                <div class="requirement-role-group">
+                                    <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
+                                    <span class="requirement-role">${req.role || 'Função'}</span>
+                                    <span class="gender-badge">${req.gender || 'Ambos'}</span>
+                                </div>
+                                <span class="requirement-slots">${slotsText}</span>
                             </div>
-                            <span class="requirement-slots">${slotsText}</span>
+                            ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
+                            <div style="text-align: right; margin-top: 0.5rem;">
+                                <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
+                            </div>
+                        </li>`;
+                }).join('');
+
+                const showTurnoTitle = turnos.length > 1 || (event && event.name) !== (turno && turno.name);
+                const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
+                
+                return `
+                    <div class="turn-wrapper">
+                        <div class="turn-header">
+                            ${turnoTitleHTML}
+                            <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
                         </div>
-                        ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
-                        <div style="text-align: right; margin-top: 0.5rem;">
-                            <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
+                        <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
+                        <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
+                            <select id="role-select-${turno.id}">${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}</select>
+                            <select id="gender-select-${turno.id}">${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}</select>
+                            <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
+                            <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
                         </div>
-                    </li>
-                `;
+                    </div>`;
             }).join('');
 
-            const showTurnoTitle = turnos.length > 1 || event.name !== turno.name;
-            const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
-            
             return `
-                <div class="turn-wrapper">
-                    <div class="turn-header">
-                        ${turnoTitleHTML}
-                        <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
+                <div class="event-card" data-event-id="${event.id}">
+                    <div class="event-header">
+                        <div>
+                            <h2 class="event-title">${event.name || 'Evento sem nome'}</h2>
+                            <p class="event-date">${formatDate(event.date)}</p>
+                        </div>
                     </div>
-                    <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
-                    <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
-                        <select id="role-select-${turno.id}">${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}</select>
-                        <select id="gender-select-${turno.id}">${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}</select>
-                        <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
-                        <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
-                    </div>
-                </div>
-            `;
+                    <div class="event-body">${turnosHTML}</div>
+                </div>`;
         }).join('');
+        container.innerHTML = finalHTML;
+    }
 
-        return `
-            <div class="event-card" data-event-id="${event.id}">
-                <div class="event-header">
-                    <div>
-                        <h2 class="event-title">${event.name}</h2>
-                        <p class="event-date">${formatDate(event.date)}</p>
-                    </div>
-                </div>
-                <div class="event-body">${turnosHTML}</div>
-            </div>
-        `;
-    }).join('');
-
-    container.innerHTML = finalHTML;
-}
-
-
-    // --- Funções de Interação com o Usuário ---
+    // --- Funções de Interação (sem alterações) ---
     function toggleAddRequirementForm(turnId) {
         const form = document.getElementById(`form-${turnId}`);
         if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
     }
-
     async function saveRequirement(clickEvent, turnId) {
         const role = document.getElementById(`role-select-${turnId}`).value;
         const gender = document.getElementById(`gender-select-${turnId}`).value;
@@ -227,7 +222,6 @@ function renderEvents(events) {
             button.textContent = 'Salvar';
         }
     }
-
     async function removeRequirement(reqId, role) {
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
@@ -238,7 +232,6 @@ function renderEvents(events) {
             alert(`Erro ao remover vaga: ${error.message}`);
         }
     }
-
     async function removeVolunteer(scheduleId, volunteerName) {
         if (!confirm(`Tem certeza que deseja remover ${volunteerName} desta escala?`)) return;
         try {
@@ -249,12 +242,9 @@ function renderEvents(events) {
             alert(`Erro ao remover voluntário: ${error.message}`);
         }
     }
-
-    // --- Lógica do Modal ---
     function closeModal() {
         if(modal) modal.style.display = 'none';
     }
-
     async function openModal(reqId, eventId, role, gender) {
         currentRequirementId = reqId;
         document.getElementById('modal-title').textContent = `Adicionar para: ${role}`;
@@ -278,7 +268,6 @@ function renderEvents(events) {
             modalList.innerHTML = `<li>Erro ao buscar: ${error.message}</li>`;
         }
     }
-
     async function selectVolunteer(memberId) {
         try {
             const { error } = await supabaseClient.functions.invoke('create-schedule', {
@@ -292,7 +281,7 @@ function renderEvents(events) {
         }
     }
 
-    // --- Carregamento de Dados ---
+    // --- Carregamento de Dados e Inicialização (sem alterações) ---
     async function loadPageData() {
         const eventsContainer = document.getElementById('events-container');
         try {
@@ -303,40 +292,31 @@ function renderEvents(events) {
             if(eventsContainer) eventsContainer.innerHTML = `<p style="color: red;">Erro ao carregar dados: ${error.message}</p>`;
         }
     }
-
     async function initializePage() {
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
-
         try {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.href = '/login';
                 return;
             }
-            
             const [rolesResult, genderResult] = await Promise.all([
                 supabaseClient.rpc('get_enum_values', { enum_name: 'ministry_role' }),
                 supabaseClient.rpc('get_enum_values', { enum_name: 'gender_type' })
             ]);
-
             if (rolesResult.error) throw rolesResult.error;
             if (genderResult.error) throw genderResult.error;
-
             ministryRoles = rolesResult.data;
             genderEnums = genderResult.data;
-
             await loadPageData();
-            
             if(loadingContainer) loadingContainer.style.display = 'none';
             if(mainContent) mainContent.style.display = 'block';
-
         } catch (error) {
             console.error("Erro na inicialização:", error);
             if(loadingContainer) loadingContainer.innerHTML = `<p style="color: red;">Erro na inicialização: ${error.message}</p>`;
         }
     }
-
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
 </html>
