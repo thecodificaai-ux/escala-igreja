@@ -107,84 +107,96 @@
         return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
     }
 
-    // --- Renderização Principal ---
-    function renderEvents(events) {
-        const container = document.getElementById('events-container');
-        if (!events || events.length === 0) {
-            container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
-            return;
-        }
+// SUBSTITUA A FUNÇÃO renderEvents INTEIRA PELA VERSÃO CORRIGIDA E MAIS ROBUSTA
 
-        const finalHTML = events.map(event => {
-            const turnos = event.turnos || [];
-            const turnosHTML = turnos.map(turno => {
-                const requirements = turno.requirements || [];
-                const requirementsHTML = requirements.map(req => {
-                    const schedules = req.schedules || [];
-                    const scaledCount = schedules.length;
-                    const neededCount = req.quantity_needed;
-                    const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
-                    const isFull = scaledCount >= neededCount;
+function renderEvents(events) {
+    const container = document.getElementById('events-container');
+    // Verificação #1: Garante que 'events' seja um array.
+    if (!Array.isArray(events) || events.length === 0) {
+        container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
+        return;
+    }
 
-                    const scaledVolunteersHTML = schedules.map(schedule => `
-                        <li class="scaled-item">
-                            <div class="scaled-info">
-                                <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
-                                <span>${schedule.member.full_name}</span>
-                            </div>
-                            <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}' )" title="Remover da escala">&times;</button>
-                        </li>
-                    `).join('');
-
-                    return `
-                        <li class="requirement-item" data-req-id="${req.id}">
-                            <div class="requirement-header">
-                                <div class="requirement-role-group">
-                                    <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
-                                    <span class="requirement-role">${req.role}</span>
-                                    <span class="gender-badge">${req.gender}</span>
-                                </div>
-                                <span class="requirement-slots">${slotsText}</span>
-                            </div>
-                            ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
-                            <div style="text-align: right; margin-top: 0.5rem;">
-                                <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
-                            </div>
-                        </li>`;
-                }).join('');
-
-                const showTurnoTitle = turnos.length > 1 || event.name !== turno.name;
-                const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
+    const finalHTML = events.map(event => {
+        // Verificação #2: Garante que 'turnos' seja sempre um array antes de usar .map()
+        const turnos = Array.isArray(event.turnos) ? event.turnos : []; 
+        const turnosHTML = turnos.map(turno => {
+            
+            // Verificação #3: Garante que 'requirements' seja sempre um array.
+            const requirements = Array.isArray(turno.requirements) ? turno.requirements : [];
+            const requirementsHTML = requirements.map(req => {
                 
+                // Verificação #4: Garante que 'schedules' também seja um array.
+                const schedules = Array.isArray(req.schedules) ? req.schedules : [];
+                const scaledCount = schedules.length;
+                const neededCount = req.quantity_needed;
+                const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
+                const isFull = scaledCount >= neededCount;
+
+                const scaledVolunteersHTML = schedules.map(schedule => `
+                    <li class="scaled-item">
+                        <div class="scaled-info">
+                            <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
+                            <span>${schedule.member.full_name}</span>
+                        </div>
+                        <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}'  )" title="Remover da escala">&times;</button>
+                    </li>
+                `).join('');
+
                 return `
-                    <div class="turn-wrapper">
-                        <div class="turn-header">
-                            ${turnoTitleHTML}
-                            <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
+                    <li class="requirement-item" data-req-id="${req.id}">
+                        <div class="requirement-header">
+                            <div class="requirement-role-group">
+                                <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
+                                <span class="requirement-role">${req.role}</span>
+                                <span class="gender-badge">${req.gender}</span>
+                            </div>
+                            <span class="requirement-slots">${slotsText}</span>
                         </div>
-                        <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
-                        <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
-                            <select id="role-select-${turno.id}">${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}</select>
-                            <select id="gender-select-${turno.id}">${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}</select>
-                            <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
-                            <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
+                        ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
+                        <div style="text-align: right; margin-top: 0.5rem;">
+                            <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
                         </div>
-                    </div>`;
+                    </li>
+                `;
             }).join('');
 
+            const showTurnoTitle = turnos.length > 1 || event.name !== turno.name;
+            const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
+            
             return `
-                <div class="event-card" data-event-id="${event.id}">
-                    <div class="event-header">
-                        <div>
-                            <h2 class="event-title">${event.name}</h2>
-                            <p class="event-date">${formatDate(event.date)}</p>
-                        </div>
+                <div class="turn-wrapper">
+                    <div class="turn-header">
+                        ${turnoTitleHTML}
+                        <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
                     </div>
-                    <div class="event-body">${turnosHTML}</div>
-                </div>`;
+                    <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
+                    <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
+                        <select id="role-select-${turno.id}">${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}</select>
+                        <select id="gender-select-${turno.id}">${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}</select>
+                        <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
+                        <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
+                    </div>
+                </div>
+            `;
         }).join('');
-        container.innerHTML = finalHTML;
-    }
+
+        return `
+            <div class="event-card" data-event-id="${event.id}">
+                <div class="event-header">
+                    <div>
+                        <h2 class="event-title">${event.name}</h2>
+                        <p class="event-date">${formatDate(event.date)}</p>
+                    </div>
+                </div>
+                <div class="event-body">${turnosHTML}</div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = finalHTML;
+}
+
 
     // --- Funções de Interação com o Usuário ---
     function toggleAddRequirementForm(turnId) {
