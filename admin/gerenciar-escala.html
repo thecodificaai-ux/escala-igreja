@@ -10,8 +10,7 @@
         :root {
             --primary-color: #4f46e5; --secondary-color: #f3f4f6; --text-primary: #1f2937;
             --text-secondary: #6b7280; --border-color: #e5e7eb; --background: #ffffff;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ); --radius: 12px;
-            --success-color: #10b981; --error-color: #ef4444;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ); --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -25,7 +24,13 @@
         .event-title { font-size: 1.5rem; font-weight: 600; margin: 0; }
         .event-date { font-size: 1rem; font-weight: 500; color: var(--primary-color); }
         .requirements-list { list-style: none; padding: 0; margin: 0; }
-        .requirement-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--secondary-color); }
+        .requirement-item { padding: 1rem 0; border-bottom: 1px solid var(--secondary-color); }
+        .requirement-header { display: flex; justify-content: space-between; align-items: center; }
+        .requirement-role { font-size: 1.1rem; font-weight: 600; }
+        .requirement-slots { font-size: 0.9rem; color: var(--text-secondary); }
+        .scaled-list { list-style: none; padding: 0.5rem 0 0 1rem; margin-top: 0.5rem; border-left: 2px solid var(--primary-color); }
+        .scaled-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; }
+        .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .add-requirement-form { display: none; padding-top: 1rem; }
         .form-row { display: flex; gap: 1rem; align-items: center; }
         .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
@@ -40,12 +45,13 @@
         </div>
         <div id="events-container" class="events-container"></div>
     </div>
+
     <script>
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
         const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
-        let ministryRoles = []; // Armazenaremos as funções (roles) aqui
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
+        let ministryRoles = [];
 
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -59,27 +65,49 @@
             return `${day}/${month}/${year} (${weekday})`;
         }
 
+        // =================================================================
+        //  ** FUNÇÃO fetchRequirements TOTALMENTE REFEITA **
+        // =================================================================
         async function fetchRequirements(eventId) {
-            const { data, error } = await supabaseClient.functions.invoke(`manage-schedule-requirements?event_id=${eventId}`);
-            if (error) { 
-                console.error(`Erro ao buscar vagas para o evento ${eventId}:`, error); 
-                const listEl = document.querySelector(`.event-card[data-event-id="${eventId}"] .requirements-list`);
-                if (listEl) listEl.innerHTML = '<li>Erro ao carregar vagas.</li>';
-                return; 
-            }
-            
             const listEl = document.querySelector(`.event-card[data-event-id="${eventId}"] .requirements-list`);
-            if (!listEl) return;
+            try {
+                const { data, error } = await supabaseClient.functions.invoke(`manage-schedule-requirements?event_id=${eventId}`);
+                if (error) throw error;
 
-            if (data.length === 0) {
-                listEl.innerHTML = '<li>Nenhuma vaga definida para seu ministério neste evento.</li>';
-            } else {
-                listEl.innerHTML = data.map(req => `
-                    <li class="requirement-item" data-req-id="${req.id}">
-                        <span><strong>${req.quantity_needed}x</strong> ${req.role}</span>
-                        <button class="button secondary" style="padding: 0.4rem 0.8rem;">Ver Voluntários</button>
-                    </li>
-                `).join('');
+                if (!listEl) return;
+
+                if (data.length === 0) {
+                    listEl.innerHTML = '<li>Nenhuma vaga definida para seu ministério neste evento.</li>';
+                } else {
+                    listEl.innerHTML = data.map(req => {
+                        const scaledCount = req.schedules.length;
+                        const neededCount = req.quantity_needed;
+                        const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
+
+                        const scaledVolunteersHTML = req.schedules.map(schedule => `
+                            <li class="scaled-item">
+                                <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
+                                <span>${schedule.member.full_name}</span>
+                            </li>
+                        ` ).join('');
+
+                        return `
+                            <li class="requirement-item" data-req-id="${req.id}">
+                                <div class="requirement-header">
+                                    <span class="requirement-role">${req.role}</span>
+                                    <span class="requirement-slots">${slotsText}</span>
+                                </div>
+                                ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
+                                <div style="text-align: right; margin-top: 0.5rem;">
+                                    <button class="button secondary" style="padding: 0.4rem 0.8rem;">Adicionar Voluntário</button>
+                                </div>
+                            </li>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error(`Erro ao buscar vagas para o evento ${eventId}:`, error);
+                if (listEl) listEl.innerHTML = '<li>Erro ao carregar vagas. Verifique o console.</li>';
             }
         }
 
@@ -94,7 +122,6 @@
             const form = document.getElementById(`form-${eventId}`);
             const roleSelect = form.querySelector('select');
             const quantityInput = form.querySelector('input');
-            
             const role = roleSelect.value;
             const quantity = quantityInput.value;
 
@@ -110,10 +137,10 @@
                 });
                 if (error) throw error;
                 
-                toggleAddRequirementForm(eventId); // Esconde o formulário
-                roleSelect.value = ''; // Limpa o formulário
+                toggleAddRequirementForm(eventId);
+                roleSelect.value = '';
                 quantityInput.value = '1';
-                fetchRequirements(eventId); // Recarrega a lista de vagas
+                fetchRequirements(eventId);
             } catch (error) {
                 alert(`Erro ao salvar vaga: ${error.message}`);
             }
@@ -124,7 +151,6 @@
             if (!session) { window.location.href = '/login'; return; }
 
             try {
-                // Busca os papéis (roles) do ENUM para popular os dropdowns
                 const { data: rolesData, error: rolesError } = await supabaseClient.rpc('get_role_enum_values');
                 if (rolesError) throw rolesError;
                 ministryRoles = rolesData;
@@ -163,7 +189,6 @@
                 document.getElementById('loading-container').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
 
-                // Após renderizar os cards, busca as vagas para cada um
                 events.forEach(event => fetchRequirements(event.id));
 
             } catch (error) {
@@ -175,4 +200,3 @@
     </script>
 </body>
 </html>
-
