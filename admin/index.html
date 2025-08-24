@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <!-- ... (toda a seção <head> e <style> permanece exatamente a mesma) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Líder - Gestão de Voluntários</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Importa a biblioteca oficial do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* --- Estilos (exatamente os mesmos de antes, sem alterações ) --- */
+        /* Estilos idênticos aos da versão anterior */
         :root {
             --primary-color: #4f46e5;
             --primary-dark: #4338ca;
@@ -19,7 +19,7 @@
             --background: #ffffff;
             --success-color: #10b981;
             --error-color: #ef4444;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
@@ -47,15 +47,13 @@
     </style>
 </head>
 <body>
-    <!-- **MUDANÇA IMPORTANTE:** Adicionamos um container de "loading" -->
     <div id="loading-container" style="text-align: center; padding-top: 4rem; font-weight: 600; color: var(--text-secondary);">
         Verificando autenticação...
     </div>
 
-    <!-- O conteúdo principal começa escondido -->
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
-            <h1>Painel do Líder</h1>
+            <h1 id="ministry-name-title">Painel do Líder</h1>
             <div class="header-actions">
                 <a href="/escala" class="button">Ver Escala Pública</a>
             </div>
@@ -73,7 +71,6 @@
                     </tr>
                 </thead>
                 <tbody id="management-body">
-                    <!-- O conteúdo será inserido aqui pelo JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -81,83 +78,83 @@
 
     <script>
         // =================================================================
-        //  CONFIGURAÇÕES - Cole suas chaves do Supabase aqui
+        //  CONFIGURAÇÕES - Suas chaves públicas do Supabase
         // =================================================================
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-        const MINISTRY_ID = 'ad374415-ea90-4c26-9b99-8e58d87b290f'; 
-
         // =================================================================
         //  LÓGICA DA APLICAÇÃO
         // =================================================================
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-        // --- **NOVO BLOCO DE SEGURANÇA** ---
-        // Esta função é a primeira coisa a ser executada.
         async function checkAuth() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
-            if (!session) {
-                // Se não há sessão, redireciona para o login
+            if (sessionError || !session) {
                 window.location.href = '/login';
-            } else {
-                // Se há sessão, esconde o "loading" e mostra o conteúdo principal
-                document.getElementById('loading-container').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                // Agora que sabemos que o usuário está logado, podemos carregar os dados.
-                fetchAndBuildManagementTable();
+                return;
             }
-        }
-        // --- FIM DO BLOCO DE SEGURANÇA ---
-
-        // As outras funções permanecem as mesmas...
-        function showToast(message, type = 'success') { /* ...código sem alteração... */ }
-        async function updateLeaderScore(memberMinistryId, newScore) { /* ...código sem alteração... */ }
-        async function fetchAndBuildManagementTable() { /* ...código sem alteração... */ }
-
-        // **MUDANÇA IMPORTANTE:** Em vez de chamar a função de carregar a tabela diretamente,
-        // agora chamamos a função de verificação de autenticação.
-        document.addEventListener('DOMContentLoaded', checkAuth);
-
-        // --- Implementação completa das funções auxiliares (para referência) ---
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `feedback-toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => document.body.removeChild(toast), 500);
-            }, 3000);
-        }
-
-        async function updateLeaderScore(memberMinistryId, newScore) {
-            console.log(`Atualizando ID ${memberMinistryId} para a nota ${newScore}`);
-            showToast('Nota atualizada com sucesso! (Simulação)', 'success');
-        }
-
-        async function fetchAndBuildManagementTable() {
-            const managementBody = document.getElementById('management-body');
-            managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Carregando voluntários...</td></tr>';
-            const functionUrl = `${SUPABASE_URL}/functions/v1/get-ministry-members?ministry_id=${MINISTRY_ID}`;
 
             try {
+                // **PASSO B: Achar o perfil do membro a partir do ID de usuário**
+                const { data: memberProfile, error: profileError } = await supabaseClient
+                    .from('members')
+                    .select('id') // Só precisamos do ID do membro por enquanto
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                if (profileError || !memberProfile) {
+                    throw new Error("Seu usuário não está associado a um perfil de membro.");
+                }
+                
+                const leaderMemberId = memberProfile.id; // Este é o ID da tabela 'members'
+
+                // **PASSO C: Achar o ministério a partir do ID do membro**
+                const { data: ministryData, error: ministryError } = await supabaseClient
+                    .from('ministries')
+                    .select('id, name')
+                    .eq('leader_id', leaderMemberId)
+                    .single();
+
+                if (ministryError || !ministryData) {
+                    throw new Error("Você não está designado como líder de nenhum ministério.");
+                }
+
+                // O resto da lógica permanece o mesmo
+                const ministryId = ministryData.id;
+                const ministryName = ministryData.name;
+
+                document.getElementById('loading-container').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('ministry-name-title').textContent = `Painel do Líder: ${ministryName}`;
+                
+                fetchAndBuildManagementTable(ministryId);
+
+            } catch (error) {
+                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p><p>Contate o administrador do sistema.</p>`;
+            }
+        }
+
+        // O resto do JavaScript permanece exatamente o mesmo
+        async function fetchAndBuildManagementTable(ministryId) {
+            const managementBody = document.getElementById('management-body');
+            managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Carregando voluntários...</td></tr>';
+            const functionUrl = `${SUPABASE_URL}/functions/v1/get-ministry-members?ministry_id=${ministryId}`;
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 const response = await fetch(functionUrl, {
-                    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Falha ao carregar voluntários.');
                 }
                 const volunteers = await response.json();
-
                 if (!volunteers || volunteers.length === 0) {
                     managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Nenhum voluntário encontrado para este ministério.</td></tr>';
                     return;
                 }
-
                 let rowsHTML = '';
                 volunteers.forEach(v => {
                     rowsHTML += `
@@ -179,12 +176,27 @@
                     `;
                 });
                 managementBody.innerHTML = rowsHTML;
-
             } catch (error) {
                 console.error('Erro ao construir tabela de gerenciamento:', error);
                 managementBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: red;">${error.message}</td></tr>`;
             }
         }
+        async function updateLeaderScore(memberMinistryId, newScore) {
+            console.log(`Atualizando ID ${memberMinistryId} para a nota ${newScore}`);
+            showToast('Nota atualizada com sucesso! (Simulação)', 'success');
+        }
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `feedback-toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 500);
+            }, 3000);
+        }
+        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>
