@@ -1,0 +1,208 @@
+// =================================================================
+//  HTML Generator: PÁGINA DE ADMIN DO LÍDER (v1.0)
+// =================================================================
+// Esta página é exclusiva para líderes e contém as ferramentas de
+// gerenciamento do ministério.
+
+// --- ESTRUTURA DA PÁGINA DE ADMIN ---
+
+const adminPageHTML = `
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Líder - Gestão de Voluntários</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #f3f4f6;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --background: #ffffff;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        h1 { color: var(--primary-color); font-weight: 700; font-size: 2rem; margin: 0; }
+        .header-actions .button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+        .header-actions .button:hover { background-color: #4338ca; }
+        p.description { color: var(--text-secondary); margin-bottom: 2rem; }
+        .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; text-align: left; vertical-align: middle; }
+        thead th { background-color: #f9fafb; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; }
+        tbody tr:last-child td { border-bottom: none; }
+        .volunteer-info { display: flex; align-items: center; gap: 1rem; }
+        .volunteer-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .volunteer-name-full { font-weight: 600; }
+        .volunteer-name-display { font-size: 0.85rem; color: var(--text-secondary); }
+        .score-input {
+            width: 60px;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        .score-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(79 70 229 / 10%);
+            outline: none;
+        }
+        .feedback-toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            transition: bottom 0.5s ease-in-out;
+        }
+        .feedback-toast.show { bottom: 20px; }
+        .feedback-toast.success { background-color: #10b981; }
+        .feedback-toast.error { background-color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Painel do Líder</h1>
+            <div class="header-actions">
+                <!-- **IMPORTANTE**: Substitua pela URL real da sua página de visualização -->
+                <a href="URL_DA_SUA_PAGINA_DE_VISUALIZACAO" class="button">Ver Escala Pública</a>
+            </div>
+        </div>
+        <p class="description">
+            Gerencie os voluntários do seu ministério. Clique na nota de um voluntário para editá-la e a mudança será salva automaticamente.
+        </p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Voluntário</th>
+                        <th>Função Principal</th>
+                        <th>Nota de Aptidão (0-10)</th>
+                    </tr>
+                </thead>
+                <tbody id="management-body">
+                    <tr><td colspan="3" style="text-align: center; padding: 2rem;">Carregando voluntários...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Função para mostrar feedback visual ao usuário
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = \`feedback-toast \${type}\`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 500);
+            }, 3000);
+        }
+
+        // Função para ATUALIZAR a nota do líder (simulada por enquanto)
+        async function updateLeaderScore(memberMinistryId, newScore) {
+            console.log(\`Atualizando ID \${memberMinistryId} para a nota \${newScore}\`);
+            // **AQUI ENTRARÁ A CHAMADA PARA A EDGE FUNCTION 'update-leader-score'**
+            try {
+                showToast('Nota atualizada com sucesso!', 'success');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        // Função para BUSCAR e CONSTRUIR a tabela de gerenciamento
+        async function fetchAndBuildManagementTable() {
+            const managementBody = document.getElementById('management-body');
+            // **IMPORTANTE:** Substitua pelo ID real do ministério que o líder gerencia.
+            const ministryId = 'ad374415-ea90-4c26-9b99-8e58d87b290f'; 
+            // **IMPORTANTE:** Substitua pela URL real da sua Edge Function.
+            const functionUrl = \`https://SEU_PROJETO.supabase.co/functions/v1/get-ministry-members?ministry_id=\${ministryId}\`;
+
+            try {
+                const response = await fetch(functionUrl );
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Falha ao carregar voluntários.');
+                }
+                const volunteers = await response.json();
+
+                if (!volunteers || volunteers.length === 0) {
+                    managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Nenhum voluntário encontrado para este ministério.</td></tr>';
+                    return;
+                }
+
+                let rowsHTML = '';
+                volunteers.forEach(v => {
+                    rowsHTML += \`
+                        <tr>
+                            <td>
+                                <div class="volunteer-info">
+                                    <img src="\${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="\${v.full_name}" class="volunteer-pic">
+                                    <div>
+                                        <div class="volunteer-name-full">\${v.full_name}</div>
+                                        <div class="volunteer-name-display">\${v.display_name}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>\${v.role}</td>
+                            <td>
+                                <input 
+                                    type="number" 
+                                    class="score-input" 
+                                    value="\${Number(v.leader_score ).toFixed(1)}" 
+                                    min="0" 
+                                    max="10" 
+                                    step="0.5"
+                                    onchange="updateLeaderScore('\${v.member_ministry_id}', this.value)"
+                                >
+                            </td>
+                        </tr>
+                    \`;
+                });
+                managementBody.innerHTML = rowsHTML;
+
+            } catch (error) {
+                console.error('Erro ao construir tabela de gerenciamento:', error);
+                managementBody.innerHTML = \`<tr><td colspan="3" style="text-align: center; padding: 2rem; color: red;">\${error.message}</td></tr>\`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchAndBuildManagementTable);
+    </script>
+</body>
+</html>
+`;
+
+// Retorna o HTML completo para o n8n
+return [{ json: { html: adminPageHTML } }];
