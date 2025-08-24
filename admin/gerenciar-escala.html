@@ -11,6 +11,7 @@
             --primary-color: #4f46e5; --secondary-color: #f3f4f6; --text-primary: #1f2937;
             --text-secondary: #6b7280; --border-color: #e5e7eb; --background: #ffffff;
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ); --radius: 12px;
+            --error-color: #ef4444;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -30,8 +31,10 @@
         .requirement-role { font-size: 1.1rem; font-weight: 600; }
         .requirement-slots { font-size: 0.9rem; color: var(--text-secondary); }
         .scaled-list { list-style: none; padding: 0.5rem 0 0 1rem; margin-top: 0.5rem; border-left: 2px solid var(--primary-color); }
-        .scaled-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; }
+        .scaled-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
+        .scaled-info { display: flex; align-items: center; gap: 0.75rem; }
         .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
         .add-requirement-form { display: none; padding-top: 1rem; }
         .form-row { display: flex; gap: 1rem; align-items: center; }
         .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
@@ -108,10 +111,13 @@
 
                         const scaledVolunteersHTML = req.schedules.map(schedule => `
                             <li class="scaled-item">
-                                <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
-                                <span>${schedule.member.full_name}</span>
+                                <div class="scaled-info">
+                                    <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
+                                    <span>${schedule.member.full_name}</span>
+                                </div>
+                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}' )" title="Remover da escala">&times;</button>
                             </li>
-                        ` ).join('');
+                        `).join('');
 
                         return `
                             <li class="requirement-item" data-req-id="${req.id}">
@@ -211,6 +217,25 @@
                 loadPage(true); 
             } catch (error) {
                 alert(`Erro ao escalar voluntário: ${error.message}`);
+            }
+        }
+
+        // --- NOVA FUNÇÃO PARA REMOVER VOLUNTÁRIO ---
+        async function removeVolunteer(scheduleId, volunteerName) {
+            if (!confirm(`Tem certeza que deseja remover ${volunteerName} da escala?`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.functions.invoke('delete-schedule', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ schedule_id: scheduleId })
+                });
+                if (error) throw error;
+
+                loadPage(true); // Recarrega a visualização
+            } catch (error) {
+                alert(`Erro ao remover voluntário: ${error.message}`);
             }
         }
 
