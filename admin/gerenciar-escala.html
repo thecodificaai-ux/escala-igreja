@@ -62,7 +62,7 @@
     </style>
 </head>
 <body>
-    <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
+    <div id="ing-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
             <h1>Gerenciar Escalas do Mês</h1>
@@ -319,8 +319,7 @@ function renderEvents(events) {
     // --- INICIALIZAÇÃO DA PÁGINA ---
     async function loadPageData() {
         try {
-            const { data, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
-            console.log(JSON.stringify(data, null, 2)); 
+            const { data, error } = await supabaseClient.functions.invoke('get-schedule-management-data'); 
             if (error) throw error;
             renderEvents(data);
         } catch (error) {
