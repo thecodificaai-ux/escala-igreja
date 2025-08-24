@@ -12,7 +12,7 @@
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --success-color: #10b981; --error-color: #ef4444;
-            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 );
+            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  );
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
@@ -43,11 +43,11 @@
         .feedback-toast.show { bottom: 20px; }
         .feedback-toast.success { background-color: var(--success-color); }
         .feedback-toast.error { background-color: var(--error-color); }
-
-        /* ** NOVOS ESTILOS PARA A TABELA AGRUPADA ** */
         .parent-row { cursor: pointer; border-top: 1px solid var(--border-color); }
-        .parent-row:hover { background-color: #f9fafb; }
+        .parent-row.no-expand { cursor: default; } /* Novo estilo para não mostrar a mãozinha */
+        .parent-row:not(.no-expand):hover { background-color: #f9fafb; }
         .parent-row td:first-child::before { content: '▶'; display: inline-block; margin-right: 10px; font-size: 0.7em; transition: transform 0.2s; }
+        .parent-row.no-expand td:first-child::before { content: ''; margin-right: 0; } /* Remove a seta */
         .parent-row.expanded td:first-child::before { transform: rotate(90deg); }
         .child-row { display: none; background-color: #f9fafb; }
         .child-row td { border: none !important; padding-left: 4rem; }
@@ -57,7 +57,6 @@
 <body>
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando Dashboard...</div>
     <div id="main-content" class="container" style="display: none;">
-        <!-- ... (Header e Widgets permanecem os mesmos) ... -->
         <div class="header">
             <h1 id="ministry-name-title">Dashboard do Líder</h1>
             <div class="header-actions"><a href="/admin/gerenciar-escala.html" class="button" style="background-color: #10b981;">Gerenciar Escalas</a>
@@ -81,7 +80,7 @@
                         <th>Voluntário</th>
                         <th>Funções</th>
                         <th>Escalado (Mês)</th>
-                        <th>Nota Média</th>
+                        <th>Nota</th>
                     </tr>
                 </thead>
                 <tbody id="management-body"></tbody>
@@ -92,78 +91,73 @@
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
         const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
         let aptitudeChart = null, monthlyLoadChart = null, currentMinistryId = null;
 
-        // ** NOVA FUNÇÃO PARA AGRUPAR OS DADOS **
         function groupVolunteers(flatList) {
             const grouped = {};
             flatList.forEach(item => {
                 if (!grouped[item.member_id]) {
                     grouped[item.member_id] = {
-                        // Dados do voluntário (são os mesmos em todas as linhas)
-                        member_id: item.member_id,
-                        full_name: item.full_name,
-                        display_name: item.display_name,
-                        photo_url: item.photo_url,
-                        is_unavailable_next_30_days: item.is_unavailable_next_30_days,
-                        // Lista para guardar as roles individuais
-                        roles: []
+                        member_id: item.member_id, full_name: item.full_name, display_name: item.display_name,
+                        photo_url: item.photo_url, is_unavailable_next_30_days: item.is_unavailable_next_30_days, roles: []
                     };
                 }
-                // Adiciona a role específica à lista do voluntário
                 grouped[item.member_id].roles.push({
-                    member_ministry_id: item.member_ministry_id,
-                    role: item.role,
-                    leader_score: item.leader_score,
-                    aptitude_level: item.aptitude_level,
-                    schedule_count_current_month: item.schedule_count_current_month
+                    member_ministry_id: item.member_ministry_id, role: item.role, leader_score: item.leader_score,
+                    aptitude_level: item.aptitude_level, schedule_count_current_month: item.schedule_count_current_month
                 });
             });
-
-            // Calcula os totais e médias para a linha pai
             Object.values(grouped).forEach(volunteer => {
                 volunteer.total_roles = volunteer.roles.length;
                 volunteer.total_schedules_month = volunteer.roles.reduce((sum, role) => sum + role.schedule_count_current_month, 0);
-                const totalScore = volunteer.roles.reduce((sum, role) => sum + role.leader_score, 0);
+                const totalScore = volunteer.roles.reduce((sum, role) => sum + parseFloat(role.leader_score), 0);
                 volunteer.average_score = volunteer.total_roles > 0 ? (totalScore / volunteer.total_roles).toFixed(1) : '0.0';
             });
-
             return Object.values(grouped);
         }
 
-        // ** FUNÇÃO DA TABELA TOTALMENTE REFEITA **
         function buildManagementTable(volunteers) {
             const managementBody = document.getElementById('management-body');
             const groupedVolunteers = groupVolunteers(volunteers);
-
             if (groupedVolunteers.length === 0) {
                 managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
                 return;
             }
-
             let rowsHTML = '';
             groupedVolunteers.forEach(v => {
                 const hasMultipleRoles = v.roles.length > 1;
-                // Linha Pai
+                const singleRole = hasMultipleRoles ? null : v.roles[0];
+                
+                // =================================================================================
+                //  ** LÓGICA CORRIGIDA AQUI **
+                //  - A classe 'no-expand' é adicionada se não houver múltiplas roles.
+                //  - O campo de nota é editável se for uma única role, e readonly se for múltipla.
+                // =================================================================================
                 rowsHTML += `
-                    <tr class="parent-row" ${hasMultipleRoles ? `onclick="toggleChildren(this, '${v.member_id}')"` : ''}>
+                    <tr class="parent-row ${!hasMultipleRoles ? 'no-expand' : ''}" ${hasMultipleRoles ? `onclick="toggleChildren(this, '${v.member_id}')"` : ''}>
                         <td>
                             <div class="volunteer-info">
                                 <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
                                 <div>
                                     <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
-                                    <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
+                                    <div style="color: var(--text-secondary  ); font-size: 0.85rem;">${v.display_name || ''}</div>
                                 </div>
                             </div>
                         </td>
                         <td style="text-align: center; font-weight: 600;">${v.total_roles}</td>
                         <td style="text-align: center; font-weight: 600;">${v.total_schedules_month}</td>
-                        <td><input type="number" readonly style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" value="${v.average_score}"></td>
+                        <td>
+                            <input 
+                                type="number" 
+                                style="width: 60px; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px; ${hasMultipleRoles ? 'background-color: #f3f4f6;' : ''}" 
+                                value="${hasMultipleRoles ? v.average_score : Number(singleRole.leader_score).toFixed(1)}" 
+                                ${hasMultipleRoles ? 'readonly' : `onchange="updateLeaderScore('${singleRole.member_ministry_id}', this.value)"`}
+                            >
+                        </td>
                     </tr>
                 `;
 
-                // Linhas Filhas (se houver mais de uma role)
                 if (hasMultipleRoles) {
                     v.roles.forEach(role => {
                         const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
@@ -181,16 +175,12 @@
             managementBody.innerHTML = rowsHTML;
         }
 
-        // ** NOVA FUNÇÃO PARA EXPANDIR/RECOLHER **
         function toggleChildren(parentRow, memberId) {
             parentRow.classList.toggle('expanded');
             const childRows = document.querySelectorAll(`.child-row[data-parent-id="${memberId}"]`);
-            childRows.forEach(row => {
-                row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
-            });
+            childRows.forEach(row => { row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row'; });
         }
 
-        // --- Funções existentes (sem alterações, apenas garantindo que estão aqui) ---
         async function checkAuth() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = '/login'; return; }
@@ -210,7 +200,7 @@
             try {
                 const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
                 if (error) throw error;
-                document.getElementById('kpi-total-volunteers').textContent = data.volunteers.length; // Atualizado para contar as linhas
+                document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
                 document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
                 document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
                 document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
