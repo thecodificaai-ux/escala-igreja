@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <!-- ... (toda a seção <head> e <style> permanece exatamente a mesma) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard do Líder</title>
@@ -20,13 +21,11 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
         .header-actions .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background-color 0.2s ease; }
-        
         .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
         .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
         .widget-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
         .widget-chart { position: relative; height: 320px; width: 100%; }
-
         .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; grid-column: 1 / -1; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; text-align: left; vertical-align: middle; white-space: nowrap; }
@@ -34,55 +33,42 @@
         .volunteer-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .aptitude-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
         .aptitude-badge.especialista { background-color: #dcfce7; color: #166534; }
-        .aptitude-badge.confiavel { background-color: #e0e7ff; color: #3730a3; }
-        .aptitude-badge.desenvolvimento { background-color: #fef3c7; color: #92400e; }
-        .aptitude-badge.treinamento { background-color: #fee2e2; color: #991b1b; }
+        .aptitude-badge.confiável { background-color: #e0e7ff; color: #3730a3; }
+        .aptitude-badge.em-desenvolvimento { background-color: #fef3c7; color: #92400e; }
+        .aptitude-badge.em-treinamento { background-color: #fee2e2; color: #991b1b; }
         .warning-icon { color: var(--warning-color); font-weight: bold; font-size: 1.2rem; cursor: help; }
     </style>
 </head>
 <body>
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando Dashboard...</div>
-
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
             <h1 id="ministry-name-title">Dashboard do Líder</h1>
             <div class="header-actions"><a href="/escala" class="button">Ver Escala Pública</a></div>
         </div>
-
         <div class="widgets-grid">
             <div class="widget"><h2 class="widget-title">Voluntários Ativos</h2><p class="widget-value" id="kpi-total-volunteers">--</p></div>
             <div class="widget"><h2 class="widget-title">Média de Aptidão</h2><p class="widget-value" id="kpi-average-score">--</p></div>
             <div class="widget"><h2 class="widget-title">Indisponíveis (30d)</h2><p class="widget-value" id="kpi-unavailable-count">--</p></div>
             <div class="widget"><h2 class="widget-title">Próximo Evento</h2><p class="widget-value" id="kpi-next-event" style="font-size: 1.8rem;">--</p></div>
         </div>
-
         <div class="widgets-grid">
             <div class="widget" style="grid-column: span 2;"><h2 class="widget-title">Níveis de Aptidão do Time</h2><div class="widget-chart"><canvas id="aptitude-chart"></canvas></div></div>
             <div class="table-wrapper">
                 <h2 class="widget-title" style="padding: 1.5rem 1.5rem 0;">Gerenciamento de Voluntários</h2>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Voluntário</th>
-                            <th>Nível Aptidão</th>
-                            <th>Serviu (90d)</th>
-                            <th>Nota (0-10)</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Voluntário</th><th>Nível Aptidão</th><th>Serviu (90d)</th><th>Nota (0-10)</th></tr></thead>
                     <tbody id="management-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
-
     <script>
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
-
         let aptitudeChart = null;
-
         async function checkAuth() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = '/login'; return; }
@@ -91,34 +77,25 @@
                 if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
                 const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
                 if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
-                
                 document.getElementById('loading-container').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
                 fetchAndBuildDashboard(ministryData.id);
-            } catch (error) {
-                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
-            }
+            } catch (error) { document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`; }
         }
-
         async function fetchAndBuildDashboard(ministryId) {
             try {
                 const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
                 if (error) throw error;
-
-                // Preencher KPIs
                 document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
                 document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
                 document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
                 document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
-
                 buildManagementTable(data.volunteers);
                 buildAptitudeChart(data.charts.aptitudeDistribution);
-            } catch (error) {
-                document.getElementById('main-content').innerHTML = `<p style="color: red;">Falha ao carregar dados: ${error.message}</p>`;
-            }
+            } catch (error) { document.getElementById('main-content').innerHTML = `<p style="color: red;">Falha ao carregar dados: ${error.message}</p>`; }
         }
-
+        // **FUNÇÃO ATUALIZADA PARA LER A NOVA ESTRUTURA DE DADOS**
         function buildManagementTable(volunteers) {
             const managementBody = document.getElementById('management-body');
             if (!volunteers || volunteers.length === 0) {
@@ -127,11 +104,11 @@
             }
             let rowsHTML = '';
             volunteers.forEach(v => {
-                const aptitudeLevel = v.member_aptitude_levels?.aptitude_level || 'N/A';
+                // Agora lemos diretamente do objeto 'v'
+                const aptitudeLevel = v.aptitude_level || 'N/A';
                 const levelClass = aptitudeLevel.replace(/\s+/g, '-').toLowerCase();
-                const timesServed = v.member_engagement_stats?.times_served_last_90_days ?? 0;
-                const isUnavailable = v.member_future_unavailability?.is_unavailable_next_30_days;
-
+                const timesServed = v.times_served_last_90_days ?? 0;
+                const isUnavailable = v.is_unavailable_next_30_days;
                 rowsHTML += `
                     <tr>
                         <td>
@@ -151,7 +128,6 @@
             });
             managementBody.innerHTML = rowsHTML;
         }
-
         function buildAptitudeChart(distributionData) {
             const ctx = document.getElementById('aptitude-chart').getContext('2d');
             if (aptitudeChart) aptitudeChart.destroy();
@@ -169,7 +145,6 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
             });
         }
-
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
