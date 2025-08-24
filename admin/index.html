@@ -37,11 +37,16 @@
         .aptitude-badge.em-desenvolvimento { background-color: #fef3c7; color: #92400e; }
         .aptitude-badge.em-treinamento { background-color: #fee2e2; color: #991b1b; }
         .warning-icon { color: var(--warning-color); font-weight: bold; font-size: 1.2rem; cursor: help; }
+        .feedback-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 600; box-shadow: var(--shadow-md); transition: bottom 0.5s ease-in-out; z-index: 1000; }
+        .feedback-toast.show { bottom: 20px; }
+        .feedback-toast.success { background-color: var(--success-color); }
+        .feedback-toast.error { background-color: var(--error-color); }
     </style>
 </head>
 <body>
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando Dashboard...</div>
     <div id="main-content" class="container" style="display: none;">
+        <!-- ... (o resto do HTML do container principal permanece o mesmo) ... -->
         <div class="header">
             <h1 id="ministry-name-title">Dashboard do Líder</h1>
             <div class="header-actions"><a href="/escala" class="button">Ver Escala Pública</a></div>
@@ -69,6 +74,8 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
         let aptitudeChart = null;
+        let currentMinistryId = null; // Variável para guardar o ID do ministério
+
         async function checkAuth() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = '/login'; return; }
@@ -77,12 +84,16 @@
                 if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
                 const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
                 if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
+                
+                currentMinistryId = ministryData.id; // Armazena o ID do ministério
+                
                 document.getElementById('loading-container').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
-                fetchAndBuildDashboard(ministryData.id);
+                fetchAndBuildDashboard(currentMinistryId);
             } catch (error) { document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`; }
         }
+
         async function fetchAndBuildDashboard(ministryId) {
             try {
                 const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
@@ -95,7 +106,7 @@
                 buildAptitudeChart(data.charts.aptitudeDistribution);
             } catch (error) { document.getElementById('main-content').innerHTML = `<p style="color: red;">Falha ao carregar dados: ${error.message}</p>`; }
         }
-        // **FUNÇÃO ATUALIZADA PARA LER A NOVA ESTRUTURA DE DADOS**
+
         function buildManagementTable(volunteers) {
             const managementBody = document.getElementById('management-body');
             if (!volunteers || volunteers.length === 0) {
@@ -104,30 +115,28 @@
             }
             let rowsHTML = '';
             volunteers.forEach(v => {
-                // Agora lemos diretamente do objeto 'v'
                 const aptitudeLevel = v.aptitude_level || 'N/A';
                 const levelClass = aptitudeLevel.replace(/\s+/g, '-').toLowerCase();
-                const timesServed = v.times_served_last_90_days ?? 0;
-                const isUnavailable = v.is_unavailable_next_30_days;
                 rowsHTML += `
                     <tr>
                         <td>
                             <div class="volunteer-info">
                                 <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
                                 <div>
-                                    <div>${v.full_name} ${isUnavailable ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
+                                    <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
                                     <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
                                 </div>
                             </div>
                         </td>
                         <td><span class="aptitude-badge ${levelClass}">${aptitudeLevel}</span></td>
-                        <td style="text-align: center; font-weight: 600;">${timesServed}</td>
-                        <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(v.leader_score).toFixed(1)}" onchange="console.log('Simulação de update')"></td>
+                        <td style="text-align: center; font-weight: 600;">${v.times_served_last_90_days ?? 0}</td>
+                        <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(v.leader_score).toFixed(1)}" onchange="updateLeaderScore('${v.member_ministry_id}', this.value)"></td>
                     </tr>
                 `;
             });
             managementBody.innerHTML = rowsHTML;
         }
+
         function buildAptitudeChart(distributionData) {
             const ctx = document.getElementById('aptitude-chart').getContext('2d');
             if (aptitudeChart) aptitudeChart.destroy();
@@ -145,6 +154,41 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
             });
         }
+
+        // **FUNÇÃO DE ATUALIZAÇÃO AGORA É REAL**
+        async function updateLeaderScore(memberMinistryId, newScoreString) {
+            const newScore = parseFloat(newScoreString);
+            if (isNaN(newScore) || newScore < 0 || newScore > 10) {
+                showToast('Nota inválida. Use um valor entre 0 e 10.', 'error');
+                return;
+            }
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('update-leader-score', {
+                    body: { memberMinistryId: memberMinistryId, newScore: newScore }
+                });
+                if (error) throw error;
+                showToast(data.message || 'Nota atualizada!', 'success');
+                // Opcional: Recarregar o dashboard para refletir a mudança no Nível de Aptidão e na média
+                fetchAndBuildDashboard(currentMinistryId);
+            } catch (error) {
+                const errorMessage = error.context?.json?.error || error.message;
+                showToast(`Erro: ${errorMessage}`, 'error');
+            }
+        }
+
+        // Função para mostrar notificações
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `feedback-toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 500);
+            }, 4000);
+        }
+
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
