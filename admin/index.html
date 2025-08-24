@@ -44,10 +44,8 @@
         .feedback-toast.success { background-color: var(--success-color); }
         .feedback-toast.error { background-color: var(--error-color); }
         .parent-row { cursor: pointer; border-top: 1px solid var(--border-color); }
-        .parent-row.no-expand { cursor: default; } /* Novo estilo para não mostrar a mãozinha */
-        .parent-row:not(.no-expand):hover { background-color: #f9fafb; }
+        .parent-row:hover { background-color: #f9fafb; }
         .parent-row td:first-child::before { content: '▶'; display: inline-block; margin-right: 10px; font-size: 0.7em; transition: transform 0.2s; }
-        .parent-row.no-expand td:first-child::before { content: ''; margin-right: 0; } /* Remove a seta */
         .parent-row.expanded td:first-child::before { transform: rotate(90deg); }
         .child-row { display: none; background-color: #f9fafb; }
         .child-row td { border: none !important; padding-left: 4rem; }
@@ -80,7 +78,7 @@
                         <th>Voluntário</th>
                         <th>Funções</th>
                         <th>Escalado (Mês)</th>
-                        <th>Nota</th>
+                        <th>Nota Média</th>
                     </tr>
                 </thead>
                 <tbody id="management-body"></tbody>
@@ -126,16 +124,14 @@
             }
             let rowsHTML = '';
             groupedVolunteers.forEach(v => {
-                const hasMultipleRoles = v.roles.length > 1;
-                const singleRole = hasMultipleRoles ? null : v.roles[0];
-                
                 // =================================================================================
                 //  ** LÓGICA CORRIGIDA AQUI **
-                //  - A classe 'no-expand' é adicionada se não houver múltiplas roles.
-                //  - O campo de nota é editável se for uma única role, e readonly se for múltipla.
+                //  - A linha pai é SEMPRE clicável para expandir.
+                //  - O campo de nota na linha pai é SEMPRE readonly.
+                //  - As linhas filhas são SEMPRE geradas.
                 // =================================================================================
                 rowsHTML += `
-                    <tr class="parent-row ${!hasMultipleRoles ? 'no-expand' : ''}" ${hasMultipleRoles ? `onclick="toggleChildren(this, '${v.member_id}')"` : ''}>
+                    <tr class="parent-row" onclick="toggleChildren(this, '${v.member_id}')">
                         <td>
                             <div class="volunteer-info">
                                 <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
@@ -150,27 +146,26 @@
                         <td>
                             <input 
                                 type="number" 
-                                style="width: 60px; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px; ${hasMultipleRoles ? 'background-color: #f3f4f6;' : ''}" 
-                                value="${hasMultipleRoles ? v.average_score : Number(singleRole.leader_score).toFixed(1)}" 
-                                ${hasMultipleRoles ? 'readonly' : `onchange="updateLeaderScore('${singleRole.member_ministry_id}', this.value)"`}
+                                style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" 
+                                value="${v.average_score}" 
+                                readonly
                             >
                         </td>
                     </tr>
                 `;
 
-                if (hasMultipleRoles) {
-                    v.roles.forEach(role => {
-                        const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
-                        rowsHTML += `
-                            <tr class="child-row" data-parent-id="${v.member_id}">
-                                <td class="role-name">${role.role}</td>
-                                <td><span class="aptitude-badge ${levelClass}">${role.aptitude_level || 'N/A'}</span></td>
-                                <td style="text-align: center;">${role.schedule_count_current_month}</td>
-                                <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}" onchange="updateLeaderScore('${role.member_ministry_id}', this.value)"></td>
-                            </tr>
-                        `;
-                    });
-                }
+                // As linhas filhas agora são sempre criadas.
+                v.roles.forEach(role => {
+                    const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
+                    rowsHTML += `
+                        <tr class="child-row" data-parent-id="${v.member_id}">
+                            <td class="role-name">${role.role}</td>
+                            <td><span class="aptitude-badge ${levelClass}">${role.aptitude_level || 'N/A'}</span></td>
+                            <td style="text-align: center;">${role.schedule_count_current_month}</td>
+                            <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}" onchange="updateLeaderScore('${role.member_ministry_id}', this.value)"></td>
+                        </tr>
+                    `;
+                });
             });
             managementBody.innerHTML = rowsHTML;
         }
