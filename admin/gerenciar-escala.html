@@ -41,7 +41,6 @@
         .form-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
         .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
         
-        /* --- ESTILOS DO MODAL --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -62,7 +61,6 @@
         <div id="events-container" class="events-container"></div>
     </div>
 
-    <!-- HTML DO MODAL (ESCONDIDO) -->
     <div id="add-volunteer-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -156,11 +154,11 @@
             const form = document.getElementById(`form-${eventId}`);
             const roleSelect = form.querySelector('.role-select');
             const quantityInput = form.querySelector('.quantity-input');
-            const genderSelect = form.querySelector('.gender-select'); // ** NOVO: Captura o seletor de gênero **
+            const genderSelect = form.querySelector('.gender-select');
             
             const role = roleSelect.value;
             const quantity = quantityInput.value;
-            const gender = genderSelect.value; // ** NOVO: Captura o valor do gênero **
+            const gender = genderSelect.value;
 
             if (!role || !quantity || quantity < 1) {
                 alert('Por favor, selecione uma função e uma quantidade válida.');
@@ -174,16 +172,16 @@
                         event_id: eventId, 
                         role: role, 
                         quantity_needed: parseInt(quantity),
-                        gender: gender // ** NOVO: Envia o gênero para a função **
+                        gender: gender
                     })
                 });
                 if (error) throw error;
                 
-                toggleAddRequirementForm(eventId);
-                roleSelect.value = '';
-                quantityInput.value = '1';
-                genderSelect.value = 'Ambos'; // Reseta o seletor de gênero
+                // ** CORREÇÃO APLICADA AQUI **
+                // Em vez de apenas esconder o formulário, forçamos o recarregamento
+                // da lista de vagas daquele evento para refletir a nova adição.
                 fetchRequirements(eventId);
+                toggleAddRequirementForm(eventId); // Esconde o formulário depois de recarregar
             } catch (error) {
                 alert(`Erro ao salvar vaga: ${error.message}`);
             }
@@ -216,8 +214,7 @@
         }
 
         function closeModal() {
-            const modal = document.getElementById('add-volunteer-modal');
-            modal.style.display = 'none';
+            document.getElementById('add-volunteer-modal').style.display = 'none';
         }
 
         async function scaleVolunteer(requirementId, memberId) {
@@ -227,8 +224,9 @@
                     body: JSON.stringify({ requirement_id: requirementId, member_id: memberId })
                 });
                 if (error) throw error;
-
                 closeModal();
+                // ** CORREÇÃO APLICADA AQUI **
+                // Força o recarregamento de toda a página para garantir consistência.
                 loadPage(true); 
             } catch (error) {
                 alert(`Erro ao escalar voluntário: ${error.message}`);
@@ -236,9 +234,7 @@
         }
 
         async function removeVolunteer(scheduleId, volunteerName) {
-            if (!confirm(`Tem certeza que deseja remover ${volunteerName} da escala?`)) {
-                return;
-            }
+            if (!confirm(`Tem certeza que deseja remover ${volunteerName} da escala?`)) return;
             try {
                 const { error } = await supabaseClient.functions.invoke('delete-schedule', {
                     method: 'DELETE',
@@ -252,9 +248,7 @@
         }
 
         async function removeRequirement(requirementId, roleName) {
-            if (!confirm(`Tem certeza que deseja remover a vaga de "${roleName}"?\n\nATENÇÃO: Todos os voluntários já escalados para esta vaga também serão removidos.`)) {
-                return;
-            }
+            if (!confirm(`Tem certeza que deseja remover a vaga de "${roleName}"?\n\nATENÇÃO: Todos os voluntários já escalados para esta vaga também serão removidos.`)) return;
             try {
                 const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', {
                     method: 'DELETE',
@@ -268,7 +262,12 @@
         }
 
         async function loadPage(isReload = false) {
-            if (!isReload) {
+            // ** CORREÇÃO APLICADA AQUI **
+            // Se for um recarregamento, limpa o container de eventos para
+            // garantir que a lista seja reconstruída do zero.
+            if (isReload) {
+                document.getElementById('events-container').innerHTML = '<li>Recarregando...</li>';
+            } else {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) { window.location.href = '/login'; return; }
             }
@@ -304,7 +303,6 @@
                                         ${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}
                                     </select>
                                     <input type="number" min="1" value="1" style="width: 60px;" class="quantity-input">
-                                    <!-- ** NOVO SELETOR DE GÊNERO ** -->
                                     <select class="gender-select">
                                         <option value="Ambos">Ambos</option>
                                         <option value="Masculino">Masculino</option>
