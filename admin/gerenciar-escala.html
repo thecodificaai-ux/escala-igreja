@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* SEUS ESTILOS CSS PERMANECEM OS MESMOS - NENHUMA ALTERAÇÃO AQUI */
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
@@ -88,8 +89,6 @@
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
     
-    let ministryRoles = [];
-    let genderEnums = [];
     let currentRequirementId = null;
     const modal = document.getElementById('add-volunteer-modal');
     const modalList = document.getElementById('modal-volunteer-list');
@@ -105,28 +104,20 @@
         return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
     }
 
-    // --- FUNÇÃO DE RENDERIZAÇÃO "À PROVA DE BALAS" ---
-    function renderEvents(events) {
+    // A função de renderização agora recebe os enums como parâmetros
+    function renderEvents(events, ministryRoles, genderEnums) {
         const container = document.getElementById('events-container');
-        
-        // NÍVEL 1 DE DEFESA: Garante que 'events' seja um array.
         if (!Array.isArray(events) || events.length === 0) {
             container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
             return;
         }
 
         const finalHTML = events.map(event => {
-            // NÍVEL 2 DE DEFESA: Garante que 'event' seja um objeto e 'turnos' seja um array.
             const turnos = (event && Array.isArray(event.turnos)) ? event.turnos : [];
-            
             const turnosHTML = turnos.map(turno => {
-                // NÍVEL 3 DE DEFESA: Garante que 'turno' seja um objeto e 'requirements' seja um array.
                 const requirements = (turno && Array.isArray(turno.requirements)) ? turno.requirements : [];
-                
                 const requirementsHTML = requirements.map(req => {
-                    // NÍVEL 4 DE DEFESA: Garante que 'req' seja um objeto e 'schedules' seja um array.
                     const schedules = (req && Array.isArray(req.schedules)) ? req.schedules : [];
-                    
                     const scaledCount = schedules.length;
                     const neededCount = req.quantity_needed || 0;
                     const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
@@ -137,10 +128,10 @@
                         return `
                             <li class="scaled-item">
                                 <div class="scaled-info">
-                                    <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'Nome não encontrado'}" class="scaled-pic">
-                                    <span>${member.full_name || 'Nome não encontrado'}</span>
+                                    <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'N/A'}" class="scaled-pic">
+                                    <span>${member.full_name || 'N/A'}</span>
                                 </div>
-                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}' )" title="Remover da escala">&times;</button>
+                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}' )" title="Remover">&times;</button>
                             </li>`;
                     }).join('');
 
@@ -156,7 +147,7 @@
                             </div>
                             ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
                             <div style="text-align: right; margin-top: 0.5rem;">
-                                <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
+                                <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar</button>
                             </div>
                         </li>`;
                 }).join('');
@@ -170,7 +161,7 @@
                             ${turnoTitleHTML}
                             <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
                         </div>
-                        <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
+                        <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida.</li>'}</ul>
                         <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
                             <select id="role-select-${turno.id}">${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}</select>
                             <select id="gender-select-${turno.id}">${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}</select>
@@ -184,7 +175,7 @@
                 <div class="event-card" data-event-id="${event.id}">
                     <div class="event-header">
                         <div>
-                            <h2 class="event-title">${event.name || 'Evento sem nome'}</h2>
+                            <h2 class="event-title">${event.name || 'Evento'}</h2>
                             <p class="event-date">${formatDate(event.date)}</p>
                         </div>
                     </div>
@@ -215,19 +206,20 @@
                 body: { event_id: turnId, role, gender, quantity_needed: parseInt(quantity) }
             });
             if (error) throw error;
-            loadPageData();
+            initializePage(); // Reinicia a página para mostrar os dados atualizados
         } catch (error) {
             alert(`Erro ao salvar vaga: ${error.message}`);
             button.disabled = false;
             button.textContent = 'Salvar';
         }
     }
+    // ... (outras funções de interação permanecem as mesmas) ...
     async function removeRequirement(reqId, role) {
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
             const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', { body: { requirement_id: reqId } });
             if (error) throw error;
-            loadPageData();
+            initializePage();
         } catch (error) {
             alert(`Erro ao remover vaga: ${error.message}`);
         }
@@ -237,7 +229,7 @@
         try {
             const { error } = await supabaseClient.functions.invoke('delete-schedule', { body: { schedule_id: scheduleId } });
             if (error) throw error;
-            loadPageData();
+            initializePage();
         } catch (error) {
             alert(`Erro ao remover voluntário: ${error.message}`);
         }
@@ -275,48 +267,61 @@
             });
             if (error) throw error;
             closeModal();
-            loadPageData();
+            initializePage();
         } catch (error) {
             alert(`Erro ao escalar voluntário: ${error.message}`);
         }
     }
 
-    // --- Carregamento de Dados e Inicialização (sem alterações) ---
-    async function loadPageData() {
-        const eventsContainer = document.getElementById('events-container');
-        try {
-            const { data, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
-            if (error) throw error;
-            renderEvents(data);
-        } catch (error) {
-            if(eventsContainer) eventsContainer.innerHTML = `<p style="color: red;">Erro ao carregar dados: ${error.message}</p>`;
-        }
-    }
+    // --- LÓGICA DE INICIALIZAÇÃO CORRIGIDA E FINAL ---
     async function initializePage() {
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
+        
+        // Garante que o conteúdo principal esteja escondido e o loading visível
+        if(mainContent) mainContent.style.display = 'none';
+        if(loadingContainer) loadingContainer.style.display = 'block';
+
         try {
+            // 1. Autenticar
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.href = '/login';
                 return;
             }
-            const [rolesResult, genderResult] = await Promise.all([
+            
+            // 2. Buscar TODOS os dados necessários em paralelo
+            const [rolesResult, genderResult, eventsResult] = await Promise.all([
                 supabaseClient.rpc('get_enum_values', { enum_name: 'ministry_role' }),
-                supabaseClient.rpc('get_enum_values', { enum_name: 'gender_type' })
+                supabaseClient.rpc('get_enum_values', { enum_name: 'gender_type' }),
+                supabaseClient.functions.invoke('get-schedule-management-data')
             ]);
-            if (rolesResult.error) throw rolesResult.error;
-            if (genderResult.error) throw genderResult.error;
-            ministryRoles = rolesResult.data;
-            genderEnums = genderResult.data;
-            await loadPageData();
+
+            // 3. Verificar erros em CADA chamada
+            if (rolesResult.error) throw new Error(`Erro ao buscar Funções: ${rolesResult.error.message}`);
+            if (genderResult.error) throw new Error(`Erro ao buscar Gêneros: ${genderResult.error.message}`);
+            if (eventsResult.error) throw new Error(`Erro ao buscar Eventos: ${eventsResult.error.message}`);
+
+            // 4. Se tudo deu certo, extrair os dados
+            const ministryRoles = rolesResult.data;
+            const genderEnums = genderResult.data;
+            const events = eventsResult.data;
+
+            // 5. SÓ AGORA, com todos os dados em mãos, chamar a renderização
+            renderEvents(events, ministryRoles, genderEnums);
+            
+            // 6. Esconder o loading e mostrar o conteúdo
             if(loadingContainer) loadingContainer.style.display = 'none';
             if(mainContent) mainContent.style.display = 'block';
+
         } catch (error) {
-            console.error("Erro na inicialização:", error);
-            if(loadingContainer) loadingContainer.innerHTML = `<p style="color: red;">Erro na inicialização: ${error.message}</p>`;
+            console.error("Erro fatal na inicialização:", error);
+            if(loadingContainer) {
+                loadingContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
+            }
         }
     }
+
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
 </html>
