@@ -28,13 +28,14 @@
         .requirements-list { list-style: none; padding: 0; margin: 0; }
         .requirement-item { padding: 1rem 0; border-bottom: 1px solid var(--secondary-color); }
         .requirement-header { display: flex; justify-content: space-between; align-items: center; }
+        .requirement-role-group { display: flex; align-items: center; gap: 0.75rem; }
         .requirement-role { font-size: 1.1rem; font-weight: 600; }
         .requirement-slots { font-size: 0.9rem; color: var(--text-secondary); }
         .scaled-list { list-style: none; padding: 0.5rem 0 0 1rem; margin-top: 0.5rem; border-left: 2px solid var(--primary-color); }
         .scaled-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
         .scaled-info { display: flex; align-items: center; gap: 0.75rem; }
         .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
+        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
         .add-requirement-form { display: none; padding-top: 1rem; }
         .form-row { display: flex; gap: 1rem; align-items: center; }
         .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
@@ -122,7 +123,10 @@
                         return `
                             <li class="requirement-item" data-req-id="${req.id}">
                                 <div class="requirement-header">
-                                    <span class="requirement-role">${req.role}</span>
+                                    <div class="requirement-role-group">
+                                        <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
+                                        <span class="requirement-role">${req.role}</span>
+                                    </div>
                                     <span class="requirement-slots">${slotsText}</span>
                                 </div>
                                 ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
@@ -220,7 +224,6 @@
             }
         }
 
-        // --- NOVA FUNÇÃO PARA REMOVER VOLUNTÁRIO ---
         async function removeVolunteer(scheduleId, volunteerName) {
             if (!confirm(`Tem certeza que deseja remover ${volunteerName} da escala?`)) {
                 return;
@@ -233,9 +236,28 @@
                 });
                 if (error) throw error;
 
-                loadPage(true); // Recarrega a visualização
+                loadPage(true);
             } catch (error) {
                 alert(`Erro ao remover voluntário: ${error.message}`);
+            }
+        }
+
+        // --- NOVA FUNÇÃO PARA REMOVER VAGA ---
+        async function removeRequirement(requirementId, roleName) {
+            if (!confirm(`Tem certeza que deseja remover a vaga de "${roleName}"?\n\nATENÇÃO: Todos os voluntários já escalados para esta vaga também serão removidos.`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ requirement_id: requirementId })
+                });
+                if (error) throw error;
+
+                loadPage(true); // Recarrega a visualização
+            } catch (error) {
+                alert(`Erro ao remover vaga: ${error.message}`);
             }
         }
 
