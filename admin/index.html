@@ -1,34 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <!-- ... (toda a seção <head> e <style> permanece exatamente a mesma) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Líder - Gestão de Voluntários</title>
+    <title>Dashboard do Líder</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Estilos idênticos aos da versão anterior */
         :root {
-            --primary-color: #4f46e5;
-            --primary-dark: #4338ca;
-            --secondary-color: #f3f4f6;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --background: #ffffff;
-            --success-color: #10b981;
-            --error-color: #ef4444;
+            --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
+            --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
+            --background: #ffffff; --success-color: #10b981; --error-color: #ef4444;
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        h1 { color: var(--primary-color); font-weight: 700; font-size: 2rem; margin: 0; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
         .header-actions .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background-color 0.2s ease; }
         .header-actions .button:hover { background-color: var(--primary-dark); }
-        p.description { color: var(--text-secondary); margin-bottom: 2rem; }
+        
+        /* Estilos dos Widgets */
+        .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
+        .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .widget-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
+        .widget-chart { position: relative; height: 300px; }
+
+        /* Estilos da Tabela */
         .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; text-align: left; vertical-align: middle; }
@@ -40,10 +41,6 @@
         .volunteer-name-display { font-size: 0.85rem; color: var(--text-secondary); }
         .score-input { width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center; font-weight: 600; font-size: 1rem; transition: all 0.2s ease; }
         .score-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgb(79 70 229 / 10%); outline: none; }
-        .feedback-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 600; box-shadow: var(--shadow-md); transition: bottom 0.5s ease-in-out; z-index: 1000; }
-        .feedback-toast.show { bottom: 20px; }
-        .feedback-toast.success { background-color: var(--success-color); }
-        .feedback-toast.error { background-color: var(--error-color); }
     </style>
 </head>
 <body>
@@ -53,149 +50,180 @@
 
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
-            <h1 id="ministry-name-title">Painel do Líder</h1>
+            <h1 id="ministry-name-title">Dashboard do Líder</h1>
             <div class="header-actions">
                 <a href="/escala" class="button">Ver Escala Pública</a>
             </div>
         </div>
-        <p class="description">
-            Gerencie os voluntários do seu ministério. Clique na nota de um voluntário para editá-la e a mudança será salva automaticamente.
-        </p>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Voluntário</th>
-                        <th>Função Principal</th>
-                        <th>Nota de Aptidão (0-10)</th>
-                    </tr>
-                </thead>
-                <tbody id="management-body">
-                </tbody>
-            </table>
+
+        <!-- Widgets de Destaque (KPIs) -->
+        <div class="widgets-grid">
+            <div class="widget">
+                <h2 class="widget-title">Voluntários Ativos</h2>
+                <p class="widget-value" id="kpi-total-volunteers">--</p>
+            </div>
+            <div class="widget">
+                <h2 class="widget-title">Média de Aptidão</h2>
+                <p class="widget-value" id="kpi-average-score">--</p>
+            </div>
+            <div class="widget">
+                <h2 class="widget-title">Próximo Evento</h2>
+                <p class="widget-value" id="kpi-next-event">--</p>
+            </div>
+        </div>
+
+        <!-- Gráfico e Tabela -->
+        <div class="widgets-grid">
+            <div class="widget" style="grid-column: 1 / -1;">
+                <h2 class="widget-title">Distribuição de Notas de Aptidão</h2>
+                <div class="widget-chart">
+                    <canvas id="score-distribution-chart"></canvas>
+                </div>
+            </div>
+            <div class="widget" style="grid-column: 1 / -1;">
+                 <h2 class="widget-title">Gerenciamento de Voluntários</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Voluntário</th>
+                                <th>Função Principal</th>
+                                <th>Nota de Aptidão (0-10)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="management-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // =================================================================
-        //  CONFIGURAÇÕES - Suas chaves públicas do Supabase
-        // =================================================================
         const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-        // =================================================================
-        //  LÓGICA DA APLICAÇÃO
-        // =================================================================
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQ0NDk2MjgsImV4cCI6MjA0MDAyNTYyOH0.4k_5D-r21h3OTk0k-4yGq5xJk2qBf-Y2K2Y4HRo_56c';
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-        async function checkAuth() {
-            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        let scoreChart = null; // Variável global para a instância do gráfico
 
-            if (sessionError || !session) {
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
                 window.location.href = '/login';
                 return;
             }
-
             try {
-                // **PASSO B: Achar o perfil do membro a partir do ID de usuário**
-                const { data: memberProfile, error: profileError } = await supabaseClient
-                    .from('members')
-                    .select('id') // Só precisamos do ID do membro por enquanto
-                    .eq('user_id', session.user.id)
-                    .single();
-
-                if (profileError || !memberProfile) {
-                    throw new Error("Seu usuário não está associado a um perfil de membro.");
-                }
+                const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
+                if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
                 
-                const leaderMemberId = memberProfile.id; // Este é o ID da tabela 'members'
-
-                // **PASSO C: Achar o ministério a partir do ID do membro**
-                const { data: ministryData, error: ministryError } = await supabaseClient
-                    .from('ministries')
-                    .select('id, name')
-                    .eq('leader_id', leaderMemberId)
-                    .single();
-
-                if (ministryError || !ministryData) {
-                    throw new Error("Você não está designado como líder de nenhum ministério.");
-                }
-
-                // O resto da lógica permanece o mesmo
-                const ministryId = ministryData.id;
-                const ministryName = ministryData.name;
+                const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
+                if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
 
                 document.getElementById('loading-container').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
-                document.getElementById('ministry-name-title').textContent = `Painel do Líder: ${ministryName}`;
+                document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
                 
-                fetchAndBuildManagementTable(ministryId);
-
+                fetchAndBuildDashboard(ministryData.id);
             } catch (error) {
-                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p><p>Contate o administrador do sistema.</p>`;
+                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
             }
         }
 
-        // O resto do JavaScript permanece exatamente o mesmo
-        async function fetchAndBuildManagementTable(ministryId) {
-            const managementBody = document.getElementById('management-body');
-            managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Carregando voluntários...</td></tr>';
-            const functionUrl = `${SUPABASE_URL}/functions/v1/get-ministry-members?ministry_id=${ministryId}`;
+        async function fetchAndBuildDashboard(ministryId) {
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                const response = await fetch(functionUrl, {
-                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                const { data, error } = await supabaseClient.functions.invoke('get-ministry-members', {
+                    method: 'GET', // Importante especificar o método GET
+                    headers: { 'Content-Type': 'application/json' },
+                    // A URL da função já inclui o parâmetro, mas podemos garantir aqui
+                    // A autenticação é passada automaticamente pelo client
                 });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Falha ao carregar voluntários.');
-                }
-                const volunteers = await response.json();
-                if (!volunteers || volunteers.length === 0) {
-                    managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Nenhum voluntário encontrado para este ministério.</td></tr>';
-                    return;
-                }
-                let rowsHTML = '';
-                volunteers.forEach(v => {
-                    rowsHTML += `
-                        <tr>
-                            <td>
-                                <div class="volunteer-info">
-                                    <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
-                                    <div>
-                                        <div class="volunteer-name-full">${v.full_name}</div>
-                                        <div class="volunteer-name-display">${v.display_name || ''}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>${v.role}</td>
-                            <td>
-                                <input type="number" class="score-input" value="${Number(v.leader_score ).toFixed(1)}" min="0" max="10" step="0.5" onchange="updateLeaderScore('${v.member_ministry_id}', this.value)">
-                            </td>
-                        </tr>
-                    `;
-                });
-                managementBody.innerHTML = rowsHTML;
+
+                if (error) throw error;
+                
+                // Preencher KPIs
+                document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
+                document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
+                document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
+
+                // Renderizar Tabela
+                buildManagementTable(data.volunteers);
+
+                // Renderizar Gráfico
+                buildScoreChart(data.charts.scoreDistribution);
+
             } catch (error) {
-                console.error('Erro ao construir tabela de gerenciamento:', error);
-                managementBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: red;">${error.message}</td></tr>`;
+                console.error('Erro ao construir dashboard:', error);
+                document.getElementById('main-content').innerHTML = `<p style="color: red;">Falha ao carregar dados do dashboard: ${error.message}</p>`;
             }
         }
-        async function updateLeaderScore(memberMinistryId, newScore) {
-            console.log(`Atualizando ID ${memberMinistryId} para a nota ${newScore}`);
-            showToast('Nota atualizada com sucesso! (Simulação)', 'success');
+
+        function buildManagementTable(volunteers) {
+            const managementBody = document.getElementById('management-body');
+            if (!volunteers || volunteers.length === 0) {
+                managementBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 2rem;">Nenhum voluntário encontrado.</td></tr>';
+                return;
+            }
+            let rowsHTML = '';
+            volunteers.forEach(v => {
+                rowsHTML += `
+                    <tr>
+                        <td>
+                            <div class="volunteer-info">
+                                <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
+                                <div>
+                                    <div class="volunteer-name-full">${v.full_name}</div>
+                                    <div class="volunteer-name-display">${v.display_name || ''}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${v.role}</td>
+                        <td>
+                            <input type="number" class="score-input" value="${Number(v.leader_score ).toFixed(1)}" min="0" max="10" step="0.5" onchange="updateLeaderScore('${v.member_ministry_id}', this.value)">
+                        </td>
+                    </tr>
+                `;
+            });
+            managementBody.innerHTML = rowsHTML;
         }
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `feedback-toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => document.body.removeChild(toast), 500);
-            }, 3000);
+
+        function buildScoreChart(distributionData) {
+            const ctx = document.getElementById('score-distribution-chart').getContext('2d');
+            const chartData = {
+                labels: Object.keys(distributionData),
+                datasets: [{
+                    label: 'Nº de Voluntários',
+                    data: Object.values(distributionData),
+                    backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                    borderColor: 'rgba(79, 70, 229, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            };
+
+            if(scoreChart) {
+                scoreChart.destroy(); // Destrói o gráfico antigo antes de criar um novo
+            }
+
+            scoreChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
         }
+
+        // Função de simulação, como combinado
+        function updateLeaderScore(memberMinistryId, newScore) {
+            console.log(`(Simulação) Atualizando ID ${memberMinistryId} para a nota ${newScore}`);
+        }
+
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
