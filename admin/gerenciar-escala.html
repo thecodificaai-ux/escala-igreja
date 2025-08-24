@@ -100,87 +100,97 @@
             return `${day}/${month} (${weekdays[correctedDate.getDay()]})`;
         }
 
-        function renderEvents(events) {
-            const container = document.getElementById('events-container');
-            if (!events || events.length === 0) {
-                container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
-                return;
-            }
+// SUBSTITUA A FUNÇÃO renderEvents INTEIRA POR ESTA VERSÃO
 
-            container.innerHTML = events.map(event => {
-                const turnosHTML = event.turnos.map(turno => {
-                    const requirementsHTML = turno.requirements.map(req => {
-                        const scaledCount = req.schedules.length;
-                        const neededCount = req.quantity_needed;
-                        const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
-                        const isFull = scaledCount >= neededCount;
+function renderEvents(events) {
+    const container = document.getElementById('events-container');
+    if (!events || events.length === 0) {
+        container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
+        return;
+    }
 
-                        const scaledVolunteersHTML = req.schedules.map(schedule => `
-                            <li class="scaled-item">
-                                <div class="scaled-info">
-                                    <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
-                                    <span>${schedule.member.full_name}</span>
-                                </div>
-                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}' )" title="Remover da escala">&times;</button>
-                            </li>
-                        `).join('');
+    const finalHTML = events.map(event => {
+        const turnosHTML = event.turnos.map(turno => {
+            const requirementsHTML = turno.requirements.map(req => {
+                const scaledCount = req.schedules.length;
+                const neededCount = req.quantity_needed;
+                const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
+                const isFull = scaledCount >= neededCount;
 
-                        return `
-                            <li class="requirement-item" data-req-id="${req.id}">
-                                <div class="requirement-header">
-                                    <div class="requirement-role-group">
-                                        <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
-                                        <span class="requirement-role">${req.role}</span>
-                                        <span class="gender-badge">${req.gender}</span>
-                                    </div>
-                                    <span class="requirement-slots">${slotsText}</span>
-                                </div>
-                                ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
-                                <div style="text-align: right; margin-top: 0.5rem;">
-                                    <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
-                                </div>
-                            </li>
-                        `;
-                    }).join('');
-
-                    // Só mostra o título do turno se o nome for diferente do evento pai
-                    const showTurnoTitle = event.turnos.length > 1 || event.name !== turno.name;
-                    const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
-                    
-                    return `
-                        <div class="turn-wrapper">
-                            ${turnoTitleHTML}
-                            <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
+                const scaledVolunteersHTML = req.schedules.map(schedule => `
+                    <li class="scaled-item">
+                        <div class="scaled-info">
+                            <img src="${schedule.member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${schedule.member.full_name}" class="scaled-pic">
+                            <span>${schedule.member.full_name}</span>
                         </div>
-                    `;
-                }).join('');
+                        <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${schedule.member.full_name}' )" title="Remover da escala">&times;</button>
+                    </li>
+                `).join('');
 
                 return `
-                    <div class="event-card" data-event-id="${event.id}">
-                        <div class="event-header">
-                            <div>
-                                <h2 class="event-title">${event.name}</h2>
-                                <p class="event-date">${formatDate(event.date)}</p>
+                    <li class="requirement-item" data-req-id="${req.id}">
+                        <div class="requirement-header">
+                            <div class="requirement-role-group">
+                                <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
+                                <span class="requirement-role">${req.role}</span>
+                                <span class="gender-badge">${req.gender}</span>
                             </div>
-                            <button class="button" onclick="toggleAddRequirementForm('${event.id}')">Adicionar Vaga</button>
+                            <span class="requirement-slots">${slotsText}</span>
                         </div>
-                        <div class="event-body">
-                            ${turnosHTML}
-                            <div class="add-requirement-form form-row" id="form-${event.id}" style="display: none;">
-                                <select id="role-select-${event.id}">
-                                    <option value="">Selecione a função</option>
-                                    ${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}
-                                </select>
-                                <select id="gender-select-${event.id}">
-                                    ${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}
-                                </select>
-                                <input type="number" id="quantity-input-${event.id}" min="1" value="1" style="width: 60px;">
-                                <button class="button" onclick="saveRequirement(event, '${event.id}')">Salvar</button>
-                            </div>
+                        ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
+                        <div style="text-align: right; margin-top: 0.5rem;">
+                            <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar Voluntário</button>
                         </div>
-                    </div>
+                    </li>
                 `;
             }).join('');
+
+            const showTurnoTitle = event.turnos.length > 1 || event.name !== turno.name;
+            const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
+            
+            return `
+                <div class="turn-wrapper">
+                    <div class="turn-header">
+                        ${turnoTitleHTML}
+                        <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
+                    </div>
+                    <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida para este turno.</li>'}</ul>
+                    
+                    <!-- Formulário de Adição de Vaga (específico para este turno) -->
+                    <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
+                        <select id="role-select-${turno.id}">
+                            <option value="">Selecione a função</option>
+                            ${ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('')}
+                        </select>
+                        <select id="gender-select-${turno.id}">
+                            ${genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('')}
+                        </select>
+                        <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
+                        <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="event-card" data-event-id="${event.id}">
+                <div class="event-header">
+                    <div>
+                        <h2 class="event-title">${event.name}</h2>
+                        <p class="event-date">${formatDate(event.date)}</p>
+                    </div>
+                    <!-- O botão global foi removido daqui -->
+                </div>
+                <div class="event-body">
+                    ${turnosHTML}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = finalHTML;
+}
+
             // LINHA CORRIGIDA const finalHTML = events.map(event => {     // ... todo o código do .map que já está lá ...     const turnosHTML = event.turnos.map(turno => {         // ...     }).join('');      return `         <div class="event-card" data-event-id="${event.id}">             // ...             <div class="event-body">                 ${turnosHTML}                 // ...             </div>         </div>     `; }).join('');  container.innerHTML = events.length > 0 ? finalHTML : '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
         }
 
