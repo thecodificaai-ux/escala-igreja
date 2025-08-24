@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Escalas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5; --secondary-color: #f3f4f6; --text-primary: #1f2937;
+            --text-secondary: #6b7280; --border-color: #e5e7eb; --background: #ffffff;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ); --radius: 12px;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        h1 { font-weight: 700; font-size: 2.25rem; }
+        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .events-container { display: flex; flex-direction: column; gap: 1.5rem; }
+        .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 1.5rem; }
+        .event-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .event-title { font-size: 1.5rem; font-weight: 600; margin: 0; }
+        .event-date { font-size: 1rem; font-weight: 500; color: var(--primary-color); }
+        .event-body { /* Espaço para as vagas e voluntários no futuro */ }
+    </style>
+</head>
+<body>
+    <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
+    <div id="main-content" class="container" style="display: none;">
+        <div class="header">
+            <h1>Gerenciar Escalas do Mês</h1>
+            <a href="/admin" class="button">Voltar ao Dashboard</a>
+        </div>
+        <div id="events-container" class="events-container">
+            <!-- Eventos serão inseridos aqui pelo JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+            const correctedDate = new Date(date.getTime() + userTimezoneOffset);
+            const day = correctedDate.getDate().toString().padStart(2, '0');
+            const month = (correctedDate.getMonth() + 1).toString().padStart(2, '0');
+            const year = correctedDate.getFullYear();
+            const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const weekday = weekdays[correctedDate.getDay()];
+            return `${day}/${month}/${year} (${weekday})`;
+        }
+
+        async function loadPage() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = '/login'; return; }
+
+            try {
+                const { data: events, error } = await supabaseClient.functions.invoke('get-monthly-events-for-leader');
+                if (error) throw error;
+
+                const container = document.getElementById('events-container');
+                if (events.length === 0) {
+                    container.innerHTML = '<p>Nenhum evento para seu ministério encontrado este mês.</p>';
+                } else {
+                    let html = '';
+                    events.forEach(event => {
+                        html += `
+                            <div class="event-card" data-event-id="${event.id}">
+                                <div class="event-header">
+                                    <div>
+                                        <h2 class="event-title">${event.name}</h2>
+                                        <p class="event-date">${formatDate(event.event_date)}</p>
+                                    </div>
+                                    <button class="button">Adicionar Vaga</button>
+                                </div>
+                                <div class="event-body">
+                                    <p><i>Vagas e voluntários aparecerão aqui...</i></p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }
+
+                document.getElementById('loading-container').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro ao carregar eventos: ${error.message}</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPage);
+    </script>
+</body>
+</html>
