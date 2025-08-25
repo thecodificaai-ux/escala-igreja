@@ -7,95 +7,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* ================================================== */
-        /*  CSS CORRIGIDO E PADRONIZADO                      */
-        /* ================================================== */
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 2rem; 
-            flex-wrap: wrap; 
-            gap: 1rem; 
-        }
-        .header-actions { 
-            display: flex; 
-            gap: 0.75rem; 
-            flex-wrap: wrap; 
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
         h1 { font-weight: 700; font-size: 2.25rem; margin: 0; }
-        .button { 
-            background-color: var(--primary-color); 
-            color: white; 
-            padding: 0.6rem 1.2rem; 
-            border-radius: 8px; 
-            text-decoration: none; 
-            font-weight: 600; 
-            border: none; 
-            cursor: pointer; 
-            transition: background-color 0.2s; 
-        }
-        .button:hover { background-color: var(--primary-dark); }
-        .button.secondary { background-color: var(--text-secondary); }
-        .card { 
-            background: var(--background); 
-            border-radius: var(--radius); 
-            box-shadow: var(--shadow-md); 
-            margin-bottom: 2rem; 
-            padding: 1.5rem; 
-        }
+        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none;font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
+       .button:hover { background-color: var(--primary-dark); }
+        .button.secondary {background-color: var(--text-secondary); }
+        .card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md);margin-bottom: 2rem; padding: 1.5rem; }
         .card-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.5rem 0; }
-        .form-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 1rem; 
-            align-items: flex-end; 
-        }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end; }
         .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
         .form-group label { font-weight: 500; font-size: 0.9rem; }
-        .form-group input, .form-group select { 
-            padding: 0.75rem; 
-            border-radius: 8px; 
-            border: 1px solid var(--border-color); 
-            font-size: 1rem; 
-            width: 100%;
-            box-sizing: border-box;
-        }
+        .form-group input, .form-groupselect { padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);font-size: 1rem; width: 100%; box-sizing: border-box; }
+        .form-group input[type="checkbox"] {width: auto; margin-right: 0.5rem; }
+        .checkbox-group { display: flex; align-items: center; }
         .list { list-style: none; padding: 0; margin: 0; }
-        .list-item { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 1rem; 
-            border-bottom: 1px solid var(--secondary-color); 
-            gap: 1rem;
-        }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--secondary-color); gap: 1rem; }
         .list-item:last-child { border-bottom: none; }
-        .list-item-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        .remove-btn { 
-            background: none; 
-            border: none; 
-            color: var(--error-color); 
-            font-weight: bold; 
-            font-size: 1.5rem; 
-            cursor: pointer; 
-            line-height: 1; 
-            padding: 0.25rem;
-        }
+        .list-item-content { display: flex; flex-direction: column; gap: 0.25rem; }
+        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
     </style>
 </head>
 <body>
@@ -118,16 +57,30 @@
                     <select id="volunteer-select"></select>
                 </div>
                 <div class="form-group">
-                    <label for="start-datetime">Início</label>
-                    <input type="datetime-local" id="start-datetime">
+                    <label for="start-date">Data de Início</label>
+                    <input type="date" id="start-date">
                 </div>
                 <div class="form-group">
-                    <label for="end-datetime">Fim</label>
-                    <input type="datetime-local" id="end-datetime">
+                    <label for="end-date">Data de Fim</label>
+                    <input type="date" id="end-date">
                 </div>
                 <div class="form-group">
                     <label for="reason">Motivo (Opcional)</label>
                     <input type="text" id="reason" placeholder="Ex: Viagem, Médico">
+                </div>
+            </div>
+            <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="all-day-checkbox" onchange="toggleAllDay(this, 'pontual')">
+                    <label for="all-day-checkbox">Dia Inteiro</label>
+                </div>
+                <div class="form-group">
+                    <label for="start-time">Hora de Início</label>
+                    <input type="time" id="start-time">
+                </div>
+                <div class="form-group">
+                    <label for="end-time">Hora de Fim</label>
+                    <input type="time" id="end-time">
                 </div>
                 <div class="form-group">
                     <button class="button" onclick="addUnavailability()">Adicionar</button>
@@ -154,12 +107,18 @@
                     <select id="rule-type-select" onchange="updateRuleForm()"></select>
                 </div>
                 <div class="form-group" id="rule-value-group"></div>
-                 <div class="form-group">
-                    <label for="rule-start-time">Horário de Início (Opcional)</label>
+            </div>
+             <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="rule-all-day-checkbox" onchange="toggleAllDay(this, 'regra')">
+                    <label for="rule-all-day-checkbox">Dia Inteiro</label>
+                </div>
+                <div class="form-group">
+                    <label for="rule-start-time">Horário de Início</label>
                     <input type="time" id="rule-start-time">
                 </div>
                 <div class="form-group">
-                    <label for="rule-end-time">Horário de Fim (Opcional)</label>
+                    <label for="rule-end-time">Horário de Fim</label>
                     <input type="time" id="rule-end-time">
                 </div>
                 <div class="form-group">
@@ -186,14 +145,14 @@
     const ruleVolunteerSelect = document.getElementById('rule-volunteer-select');
     const unavailabilityList = document.getElementById('unavailability-list');
     const ruleList = document.getElementById('rule-list');
-    const ruleTypeSelect = document.getElementById('rule-type-select');
+   const ruleTypeSelect = document.getElementById('rule-type-select');
 
     const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     const ordinals = ["Primeiro(a)", "Segundo(a)", "Terceiro(a)", "Quarto(a)", "Último(a)"];
 
-    function formatDateTime(isoString) {
+    function formatDateOnly(isoString) {
         if (!isoString) return 'N/A';
-        return new Date(isoString).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return new Date(isoString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
     }
 
     function renderUnavailabilityList(unavailabilities) {
@@ -201,20 +160,28 @@
             unavailabilityList.innerHTML = '<li>Nenhuma indisponibilidade pontual cadastrada.</li>';
             return;
         }
-        unavailabilityList.innerHTML = unavailabilities.map(item => `
-            <li class="list-item">
-                <div class="list-item-content">
-                    <strong>${item.members.full_name}</strong>
-                    <small>${formatDateTime(item.start_time)} até ${formatDateTime(item.end_time)}</small>
-                    ${item.reason ? `<small>Motivo: ${item.reason}</small>` : ''}
-                </div>
-                <button class="remove-btn" onclick="removeUnavailability('${item.id}')">&times;</button>
-            </li>`).join('');
+        unavailabilityList.innerHTML = unavailabilities.map(item => {
+            let dateDescription = '';
+            if (item.start_time && item.end_time) {
+                dateDescription = `${new Date(item.start_time).toLocaleString('pt-BR')} até ${new Date(item.end_time).toLocaleString('pt-BR')}`;
+            } else {
+                dateDescription = `${formatDateOnly(item.start_date)} (Dia Inteiro)`;
+            }
+            return `
+                <li class="list-item">
+                    <div class="list-item-content">
+                        <strong>${item.members.full_name}</strong>
+                        <small>${dateDescription}</small>
+                        ${item.reason ? `<small>Motivo: ${item.reason}</small>` : ''}
+                    </div>
+                    <button class="remove-btn" onclick="removeUnavailability('${item.id}')">&times;</button>
+                </li>`;
+        }).join('');
     }
 
     function renderRuleList(rules) {
         if (!rules || rules.length === 0) {
-            ruleList.innerHTML = '<li>Nenhuma regra cadastrada.</li>';
+           ruleList.innerHTML = '<li>Nenhuma regra cadastrada.</li>';
             return;
         }
         ruleList.innerHTML = rules.map(item => {
@@ -226,6 +193,8 @@
             }
             if (item.start_time && item.end_time) {
                 description += `, das ${item.start_time.slice(0, 5)} às ${item.end_time.slice(0, 5)}`;
+            } else {
+                description += ', Dia Inteiro';
             }
             return `
                 <li class="list-item">
@@ -238,28 +207,60 @@
         }).join('');
     }
 
+    function toggleAllDay(checkbox, type) {
+        const startInput = document.getElementById(type === 'pontual' ? 'start-time' : 'rule-start-time');
+        const endInput = document.getElementById(type === 'pontual' ? 'end-time' : 'rule-end-time');
+        const isChecked = checkbox.checked;
+
+        startInput.disabled = isChecked;
+        endInput.disabled = isChecked;
+        startInput.style.backgroundColor = isChecked ? '#e5e7eb' :'white';
+        endInput.style.backgroundColor = isChecked ? '#e5e7eb' : 'white';
+
+        if (isChecked) {
+            startInput.value = '';
+            endInput.value ='';
+        }
+    }
+
     async function addUnavailability() {
         const member_id = volunteerSelect.value;
-        const start_time = document.getElementById('start-datetime').value;
-        const end_time = document.getElementById('end-datetime').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        const isAllDay = document.getElementById('all-day-checkbox').checked;
+        const startTime = document.getElementById('start-time').value;
+        const endTime = document.getElementById('end-time').value;
         const reason = document.getElementById('reason').value;
-        if (!member_id || !start_time || !end_time) {
+
+        if (!member_id || !startDate || !endDate) {
             alert('Por favor, selecione um voluntário e preencha as datas de início e fim.');
             return;
         }
+        if (!isAllDay && (!startTime || !endTime)) {
+            alert('Por favor, preencha os horários de início e fim, ou marque "Dia Inteiro".');
+            return;
+        }
+
+        const start_time = isAllDay ? `${startDate}T00:00:00` : `${startDate}T${startTime}`;
+        const end_time = isAllDay ? `${endDate}T23:59:59` : `${endDate}T${endTime}`;
+
         try {
-            const { error } = await supabaseClient.functions.invoke('create-unavailability', { body: { member_id, start_time, end_time, reason } });
-            if (error) throw error;
+            const { error } = awaitsupabaseClient.functions.invoke('create-unavailability', {
+                body: { member_id, start_time, end_time, reason }
+            });
+            if (error)throw error;
             alert('Indisponibilidade adicionada com sucesso!');
             initializePage();
-        } catch (error) { alert(`Erro ao adicionar: ${error.message}`); }
+       } catch (error) {
+            alert(`Erro ao adicionar: ${error.message}`);
+        }
     }
 
     async function removeUnavailability(id) {
         if (!confirm('Tem certeza que deseja remover esta indisponibilidade?')) return;
         try {
             const { error } = await supabaseClient.functions.invoke('delete-unavailability', { body: { unavailability_id: id } });
-            if (error) throw error;
+            if(error) throw error;
             initializePage();
         } catch (error) { alert(`Erro ao remover: ${error.message}`); }
     }
@@ -268,7 +269,7 @@
         const ruleType = ruleTypeSelect.value;
         const container = document.getElementById('rule-value-group');
         if (ruleType === 'day_of_week') {
-            container.innerHTML = `
+           container.innerHTML = `
                 <label for="rule-day-select">Dia da Semana</label>
                 <select id="rule-day-select">
                     ${weekdays.map((day, index) => `<option value="${index}">${day}</option>`).join('')}
@@ -289,35 +290,48 @@
     async function addRule() {
         const member_id = ruleVolunteerSelect.value;
         const rule_type = ruleTypeSelect.value;
-        const start_time = document.getElementById('rule-start-time').value || null;
-        const end_time = document.getElementById('rule-end-time').value || null;
+        const isAllDay = document.getElementById('rule-all-day-checkbox').checked;
+        const start_time = isAllDay ? null : document.getElementById('rule-start-time').value;
+        const end_time = isAllDay ? null : document.getElementById('rule-end-time').value;
+        
         let rule_value = null;
         let ordinal = null;
+
         if (rule_type === 'day_of_week') {
             rule_value = document.getElementById('rule-day-select').value;
         } else if (rule_type === 'ordinal_day_of_week') {
             rule_value = document.getElementById('rule-day-select').value;
             ordinal = document.getElementById('rule-ordinal-select').value;
         }
+
         if (!member_id || rule_value === null) {
             alert('Por favor, preencha todos os campos da regra.');
             return;
         }
+        if (!isAllDay && (!start_time || !end_time)) {
+            alert('Por favor, preencha os horários de início e fim, ou marque "Dia Inteiro".');
+            return;
+        }
+        
         try {
-            const { error } = await supabaseClient.functions.invoke('create-unavailability-rule', { body: { member_id, rule_type, rule_value: parseInt(rule_value), ordinal, start_time, end_time } });
+            const { error } = await supabaseClient.functions.invoke('create-unavailability-rule', {
+                body: { member_id, rule_type, rule_value: parseInt(rule_value), ordinal, start_time, end_time }
+            });
             if (error) throw error;
             alert('Regra adicionada com sucesso!');
             initializePage();
-        } catch (error) { alert(`Erro ao adicionar regra: ${error.message}`); }
+        } catch (error) {
+            alert(`Erro ao adicionar regra: ${error.message}`);
+        }
     }
 
     async function removeRule(id) {
         if (!confirm('Tem certeza que deseja remover esta regra?')) return;
         try {
             const { error } = await supabaseClient.functions.invoke('delete-unavailability-rule', { body: { rule_id: id } });
-            if (error) throw error;
+            if(error) throw error;
             initializePage();
-        } catch (error) { alert(`Erro ao remover regra: ${error.message}`); }
+        } catch (error) {alert(`Erro ao remover regra: ${error.message}`); }
     }
 
     async function initializePage() {
@@ -343,7 +357,7 @@
             if (unavError) throw unavError;
             renderUnavailabilityList(unavailabilities);
 
-            const { data: rules, error: rulesError } = await supabaseClient.from('unavailability_rules').select('*, members(full_name)').order('created_at', { ascending: false });
+            const { data: rules, error: rulesError } = await supabaseClient.from('unavailability_rules').select('*, members(full_name)').order('created_at', {ascending: false });
             if (rulesError) throw rulesError;
             renderRuleList(rules);
 
