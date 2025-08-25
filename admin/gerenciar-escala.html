@@ -7,17 +7,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* SEUS ESTILOS CSS PERMANECEM OS MESMOS */
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --warning-color: #f59e0b; /* Adicionando cor de aviso */
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        
+        /* CSS do Cabeçalho ATUALIZADO */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1.5rem; 
+            flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
+            gap: 1rem; /* Espaçamento entre o título e os botões */
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.75rem; /* Espaçamento entre os botões */
+            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+        }
+
         h1 { font-weight: 700; font-size: 2.25rem; }
         .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
         .button:hover { background-color: var(--primary-dark); }
@@ -63,10 +78,19 @@
 <body>
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
+        
+        <!-- ================================================== -->
+        <!--  CABEÇALHO ATUALIZADO COM OS NOVOS BOTÕES -->
+        <!-- ================================================== -->
         <div class="header">
-            <h1>Gerenciar Escalas do Mês</h1>
-            <a href="/admin" class="button">Voltar ao Dashboard</a>
+            <h1>Gerenciar Escalas</h1>
+            <div class="header-actions">
+                <a href="/admin/escala-geral.html" class="button secondary">Ver Escala Geral</a>
+                <a href="/admin/indisponibilidades.html" class="button" style="background-color: var(--warning-color);">Indisponibilidades</a>
+                <a href="/admin" class="button">Voltar ao Dashboard</a>
+            </div>
         </div>
+
         <div id="events-container" class="events-container"></div>
     </div>
 
@@ -82,6 +106,7 @@
             </div>
         </div>
     </div>
+
 
 <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
