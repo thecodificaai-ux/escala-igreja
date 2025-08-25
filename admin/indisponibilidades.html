@@ -1,86 +1,136 @@
-<!-- Cole isso no <body> do seu arquivo /admin/indisponibilidades.html -->
-<div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
-<div id="main-content" class="container" style="display: none;">
-    <div class="header">
-        <h1>Indisponibilidades</h1>
-        <a href="/admin" class="button">Voltar ao Dashboard</a>
-    </div>
-
-    <div class="card">
-        <h2 class="form-title">Adicionar Indisponibilidade</h2>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="volunteer-select">Voluntário</label>
-                <select id="volunteer-select" required></select>
-            </div>
-            
-            <!-- Campos de Data e Hora de Início -->
-            <div class="form-group">
-                <label for="start-date">Data de Início</label>
-                <input type="date" id="start-date" required>
-            </div>
-            <div class="form-group">
-                <label for="start-time">Hora de Início</label>
-                <input type="time" id="start-time">
-            </div>
-
-            <!-- Campos de Data e Hora de Fim -->
-            <div class="form-group">
-                <label for="end-date">Data de Fim</label>
-                <input type="date" id="end-date">
-            </div>
-            <div class="form-group">
-                <label for="end-time">Hora de Fim</label>
-                <input type="time" id="end-time">
-            </div>
-
-            <!-- Checkbox para "Dia Inteiro" -->
-            <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem;">
-                <input type="checkbox" id="all-day-checkbox" onchange="toggleTimeFields()">
-                <label for="all-day-checkbox" style="margin-bottom: 0;">O dia inteiro</label>
-            </div>
-
-            <div class="form-group">
-                <label for="reason">Motivo (opcional)</label>
-                <input type="text" id="reason" placeholder="Ex: Viagem, Trabalho">
-            </div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Indisponibilidades</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
+            --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
+            --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 );
+            --radius: 12px;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        h1 { font-weight: 700; font-size: 2.25rem; }
+        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
+        .button:hover { background-color: var(--primary-dark); }
+        .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; padding: 1.5rem; }
+        .form-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.5rem 0; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .form-group select, .form-group input[type="date"], .form-group input[type="time"], .form-group input[type="text"] {
+            padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; font-family: 'Inter', sans-serif;
+        }
+        .form-group input:disabled { background-color: var(--secondary-color); cursor: not-allowed; }
+        .unavailability-list { list-style: none; padding: 0; margin: 0; }
+        .unavailability-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 1rem; }
+        .unavailability-item:last-child { border-bottom: none; }
+        .unavailability-info strong { color: var(--primary-color); }
+        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
+    <div id="main-content" class="container" style="display: none;">
+        <div class="header">
+            <h1>Indisponibilidades</h1>
+            <a href="/admin" class="button">Voltar ao Dashboard</a>
         </div>
-        <button class="button" style="margin-top: 1.5rem; width: 100%;" onclick="addUnavailability()">Adicionar</button>
+
+        <div class="card">
+            <h2 class="form-title">Adicionar Indisponibilidade</h2>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="volunteer-select">Voluntário</label>
+                    <select id="volunteer-select" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="start-date">Data de Início</label>
+                    <input type="date" id="start-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="start-time">Hora de Início</label>
+                    <input type="time" id="start-time">
+                </div>
+
+                <div class="form-group">
+                    <label for="end-date">Data de Fim</label>
+                    <input type="date" id="end-date">
+                </div>
+                <div class="form-group">
+                    <label for="end-time">Hora de Fim</label>
+                    <input type="time" id="end-time">
+                </div>
+
+                <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="checkbox" id="all-day-checkbox" onchange="toggleTimeFields()" style="width: auto;">
+                    <label for="all-day-checkbox" style="margin-bottom: 0;">O dia inteiro</label>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="reason">Motivo (opcional)</label>
+                    <input type="text" id="reason" placeholder="Ex: Viagem, Trabalho">
+                </div>
+            </div>
+            <button class="button" style="margin-top: 1.5rem; width: 100%;" onclick="addUnavailability()">Adicionar</button>
+        </div>
+
+        <div class="card">
+            <h2 class="form-title">Indisponibilidades Cadastradas</h2>
+            <ul id="unavailability-list" class="unavailability-list">
+                <!-- A lista será preenchida pelo JavaScript -->
+            </ul>
+        </div>
     </div>
 
-    <div class="card">
-        <h2 class="form-title">Indisponibilidades Cadastradas</h2>
-        <ul id="unavailability-list" class="unavailability-list"></ul>
-    </div>
-</div>
 <script>
-    // ... (constantes do Supabase e função formatDate) ...
+    const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-    // NOVA função para formatar data e hora
     function formatDateTime(dateString) {
         if (!dateString) return 'Data inválida';
         const date = new Date(dateString);
         return date.toLocaleString('pt-BR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+            hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
         });
     }
 
-    // NOVA função para controlar os campos de hora
     function toggleTimeFields() {
         const isChecked = document.getElementById('all-day-checkbox').checked;
-        document.getElementById('start-time').disabled = isChecked;
-        document.getElementById('end-time').disabled = isChecked;
+        const startTimeInput = document.getElementById('start-time');
+        const endTimeInput = document.getElementById('end-time');
+        
+        startTimeInput.disabled = isChecked;
+        endTimeInput.disabled = isChecked;
+
         if (isChecked) {
-            document.getElementById('start-time').value = '';
-            document.getElementById('end-time').value = '';
+            startTimeInput.value = '';
+            endTimeInput.value = '';
         }
     }
 
     function renderUnavailabilities(items) {
         const list = document.getElementById('unavailability-list');
         if (!items || items.length === 0) {
-            list.innerHTML = '<li>Nenhuma indisponibilidade cadastrada.</li>';
+            list.innerHTML = '<li style="padding: 1rem; text-align: center; color: var(--text-secondary);">Nenhuma indisponibilidade cadastrada.</li>';
             return;
         }
         list.innerHTML = items.map(item => `
@@ -89,12 +139,11 @@
                     <span><strong>${item.members.full_name}</strong>: de ${formatDateTime(item.start_time)} até ${formatDateTime(item.end_time)}</span>
                     ${item.reason ? `<span style="color: var(--text-secondary); margin-left: 0.5rem;">- ${item.reason}</span>` : ''}
                 </div>
-                <button class="remove-btn" onclick="removeUnavailability('${item.id}')">&times;</button>
+                <button class="remove-btn" onclick="removeUnavailability('${item.id}')" title="Remover">&times;</button>
             </li>
         `).join('');
     }
 
-    // Função addUnavailability ATUALIZADA
     async function addUnavailability() {
         const member_id = document.getElementById('volunteer-select').value;
         const startDate = document.getElementById('start-date').value;
@@ -109,7 +158,6 @@
             return;
         }
 
-        // Lógica para "Dia Inteiro"
         if (isAllDay) {
             startTime = '00:00';
             endTime = '23:59';
@@ -118,12 +166,10 @@
             return;
         }
 
-        // Se a data de fim não for preenchida, usa a mesma da de início
         if (!endDate) {
             endDate = startDate;
         }
 
-        // Constrói os timestamps completos no formato ISO
         const final_start_time = `${startDate}T${startTime}:00`;
         const final_end_time = `${endDate}T${endTime}:00`;
 
@@ -139,5 +185,55 @@
         }
     }
 
-    // ... (resto do seu JavaScript: removeUnavailability, initializePage, etc.)
+    async function removeUnavailability(unavailabilityId) {
+        if (!confirm('Tem certeza que deseja remover esta indisponibilidade?')) return;
+        try {
+            const { error } = await supabaseClient.functions.invoke('delete-unavailability', {
+                body: { unavailability_id: unavailabilityId }
+            });
+            if (error) throw error;
+            const itemToRemove = document.getElementById(`item-${unavailabilityId}`);
+            if (itemToRemove) itemToRemove.remove();
+        } catch (error) {
+            alert(`Erro ao remover: ${error.message}`);
+        }
+    }
+
+    async function initializePage() {
+        const loadingContainer = document.getElementById('loading-container');
+        const mainContent = document.getElementById('main-content');
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const { data: volunteers, error: volunteersError } = await supabaseClient.functions.invoke('get-ministry-volunteers-simple');
+            if (volunteersError) throw volunteersError;
+            
+            const volunteerSelect = document.getElementById('volunteer-select');
+            volunteerSelect.innerHTML = '<option value="">Selecione um voluntário</option>';
+            volunteers.forEach(v => {
+                volunteerSelect.innerHTML += `<option value="${v.id}">${v.full_name}</option>`;
+            });
+
+            const { data: unavailabilities, error: unavailabilitiesError } = await supabaseClient
+                .from('member_unavailability')
+                .select(`*, members(full_name)`)
+                .order('start_time', { ascending: false });
+            
+            if (unavailabilitiesError) throw unavailabilitiesError;
+            renderUnavailabilities(unavailabilities);
+
+            loadingContainer.style.display = 'none';
+            mainContent.style.display = 'block';
+        } catch (error) {
+            loadingContainer.innerHTML = `<p style="color: red;">Erro ao carregar a página: ${error.message}</p>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initializePage);
 </script>
+</body>
+</html>
