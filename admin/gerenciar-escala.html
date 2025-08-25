@@ -7,32 +7,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* SEUS ESTILOS CSS PERMANECEM OS MESMOS */
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --warning-color: #f59e0b; /* Adicionando cor de aviso */
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* CSS do Cabeçalho ATUALIZADO */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 1.5rem; 
-            flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
-            gap: 1rem; /* Espaçamento entre o título e os botões */
-        }
-        .header-actions {
-            display: flex;
-            gap: 0.75rem; /* Espaçamento entre os botões */
-            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
-        }
-
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         h1 { font-weight: 700; font-size: 2.25rem; }
         .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
         .button:hover { background-color: var(--primary-dark); }
@@ -78,19 +63,10 @@
 <body>
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
-        
-        <!-- ================================================== -->
-        <!--  CABEÇALHO ATUALIZADO COM OS NOVOS BOTÕES -->
-        <!-- ================================================== -->
         <div class="header">
-            <h1>Gerenciar Escalas</h1>
-            <div class="header-actions">
-                <a href="/admin/escala-geral.html" class="button secondary">Ver Escala Geral</a>
-                <a href="/admin/indisponibilidades.html" class="button" style="background-color: var(--warning-color);">Indisponibilidades</a>
-                <a href="/admin" class="button">Voltar ao Dashboard</a>
-            </div>
+            <h1>Gerenciar Escalas do Mês</h1>
+            <a href="/admin" class="button">Voltar ao Dashboard</a>
         </div>
-
         <div id="events-container" class="events-container"></div>
     </div>
 
@@ -106,11 +82,14 @@
             </div>
         </div>
     </div>
+
 <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
     
+    // *** A SOLUÇÃO FINAL ESTÁ AQUI ***
+    // Codificamos os valores diretamente. Simples, rápido e à prova de falhas.
     const ministryRoles = ["Projeção", "Transmissão", "Edição", "Foto", "Stories", "Câmera"];
     const genderEnums = ["Ambos", "Masculino", "Feminino"];
 
@@ -155,7 +134,7 @@
                                     <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'N/A'}" class="scaled-pic">
                                     <span>${member.full_name || 'N/A'}</span>
                                 </div>
-                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}'  )" title="Remover">&times;</button>
+                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}' )" title="Remover">&times;</button>
                             </li>`;
                     }).join('');
 
@@ -212,6 +191,7 @@
         container.innerHTML = finalHTML;
     }
 
+    // --- Funções de Interação (sem alterações) ---
     function toggleAddRequirementForm(turnId) {
         const form = document.getElementById(`form-${turnId}`);
         if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
@@ -279,7 +259,7 @@
             modalList.innerHTML = data.map(v => `
                 <li class="volunteer-list-item" onclick="selectVolunteer('${v.id}')">
                     <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="scaled-pic">
-                    <div><strong>${v.full_name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary  );">Nota: ${v.leader_score.toFixed(1)}</div></div>
+                    <div><strong>${v.full_name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary );">Nota: ${v.leader_score.toFixed(1)}</div></div>
                 </li>`).join('');
         } catch (error) {
             modalList.innerHTML = `<li>Erro ao buscar: ${error.message}</li>`;
@@ -298,6 +278,7 @@
         }
     }
 
+    // --- LÓGICA DE INICIALIZAÇÃO SIMPLIFICADA E FINAL ---
     async function initializePage() {
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
@@ -312,10 +293,12 @@
                 return;
             }
             
+            // Apenas buscamos os eventos. Os enums já estão definidos.
             const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
 
             if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
 
+            // Renderizamos passando os eventos e os enums codificados.
             renderEvents(events);
             
             if(loadingContainer) loadingContainer.style.display = 'none';
@@ -331,3 +314,4 @@
 
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
+</html>
