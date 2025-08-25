@@ -11,141 +11,128 @@
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 );
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        h1 { font-weight: 700; font-size: 2.25rem; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        h1 { font-weight: 700; font-size: 2.25rem; }
         .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
         .button:hover { background-color: var(--primary-dark); }
-        .button.secondary { background-color: var(--text-secondary); }
+        .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
         .card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; padding: 1.5rem; }
-        .card-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.5rem 0; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end; }
-        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .form-group label { font-weight: 500; font-size: 0.9rem; }
-        .form-group input, .form-group select { padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; width: 100%; box-sizing: border-box; background-color: #fff; }
-        .form-group input[type="checkbox"] { width: auto; margin-right: 0.5rem; }
-        .checkbox-group { display: flex; align-items: center; }
-        .list { list-style: none; padding: 0; margin: 0; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--secondary-color); gap: 1rem; }
-        .list-item:last-child { border-bottom: none; }
-        .list-item-content { display: flex; flex-direction: column; gap: 0.25rem; }
-        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0.25rem; }
-
-        /* ================================================== */
-        /*  **A CORREÇÃO ESTÁ AQUI**                         */
-        /* ================================================== */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus,
-        select:-webkit-autofill,
-        select:-webkit-autofill:hover,
-        select:-webkit-autofill:focus {
-            -webkit-text-fill-color: var(--text-primary);
-            -webkit-box-shadow: 0 0 0px 1000px #fff inset;
-            transition: background-color 5000s ease-in-out 0s;
+        .form-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.5rem 0; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .form-group select, .form-group input[type="date"], .form-group input[type="time"], .form-group input[type="text"] {
+            padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; font-family: 'Inter', sans-serif;
+        }
+        .form-group input:disabled { background-color: var(--secondary-color); cursor: not-allowed; }
+        .unavailability-list { list-style: none; padding: 0; margin: 0; }
+        .unavailability-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 1rem; }
+        .unavailability-item:last-child { border-bottom: none; }
+        .unavailability-info strong { color: var(--primary-color); }
+        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.75rem; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- O RESTO DO SEU HTML E JAVASCRIPT PERMANECE EXATAMENTE O MESMO -->
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
-            <h1>Gerenciar Indisponibilidades</h1>
-            <div class="header-actions">
-                <a href="/admin/gerenciar-escala.html" class="button secondary">Gerenciar Escalas</a>
-                <a href="/admin" class="button">Voltar ao Dashboard</a>
-            </div>
+            <h1>Indisponibilidades</h1>
+            <a href="/admin" class="button">Voltar ao Dashboard</a>
         </div>
 
-        <!-- Card para Indisponibilidades Pontuais -->
+        <!-- Card de Indisponibilidades Pontuais (sem alterações) -->
         <div class="card">
-            <h2 class="card-title">Adicionar Indisponibilidade Pontual</h2>
+            <h2 class="form-title">Adicionar Indisponibilidade Pontual</h2>
             <div class="form-grid">
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="volunteer-select">Voluntário</label>
-                    <select id="volunteer-select"></select>
+                    <select id="volunteer-select" required></select>
                 </div>
                 <div class="form-group">
                     <label for="start-date">Data de Início</label>
-                    <input type="date" id="start-date">
-                </div>
-                <div class="form-group">
-                    <label for="end-date">Data de Fim</label>
-                    <input type="date" id="end-date">
-                </div>
-                <div class="form-group">
-                    <label for="reason">Motivo (Opcional)</label>
-                    <input type="text" id="reason" placeholder="Ex: Viagem, Médico">
-                </div>
-            </div>
-            <div class="form-grid" style="margin-top: 1rem;">
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="all-day-checkbox" onchange="toggleAllDay(this, 'pontual')">
-                    <label for="all-day-checkbox">Dia Inteiro</label>
+                    <input type="date" id="start-date" required>
                 </div>
                 <div class="form-group">
                     <label for="start-time">Hora de Início</label>
                     <input type="time" id="start-time">
                 </div>
                 <div class="form-group">
+                    <label for="end-date">Data de Fim</label>
+                    <input type="date" id="end-date">
+                </div>
+                <div class="form-group">
                     <label for="end-time">Hora de Fim</label>
                     <input type="time" id="end-time">
                 </div>
-                <div class="form-group">
-                    <button class="button" onclick="addUnavailability()">Adicionar</button>
+                <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="checkbox" id="all-day-checkbox" onchange="toggleTimeFields()" style="width: auto;">
+                    <label for="all-day-checkbox" style="margin-bottom: 0;">O dia inteiro</label>
+                </div>
+                <div class="form-group full-width">
+                    <label for="reason">Motivo (opcional)</label>
+                    <input type="text" id="reason" placeholder="Ex: Viagem, Trabalho">
                 </div>
             </div>
+            <button class="button" style="margin-top: 1.5rem; width: 100%;" onclick="addUnavailability()">Adicionar Indisp. Pontual</button>
         </div>
 
-        <!-- Lista de Indisponibilidades Pontuais -->
         <div class="card">
-            <h2 class="card-title">Indisponibilidades Pontuais Cadastradas</h2>
-            <ul id="unavailability-list" class="list"></ul>
+            <h2 class="form-title">Indisponibilidades Pontuais Cadastradas</h2>
+            <ul id="unavailability-list" class="unavailability-list"></ul>
         </div>
 
-        <!-- Card para Regras de Indisponibilidade -->
+        <!-- Card para Adicionar Regras de Indisponibilidade (ATUALIZADO) -->
         <div class="card">
-            <h2 class="card-title">Adicionar Regra de Indisponibilidade Recorrente</h2>
+            <h2 class="form-title">Adicionar Regra de Indisponibilidade</h2>
             <div class="form-grid">
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="rule-volunteer-select">Voluntário</label>
-                    <select id="rule-volunteer-select"></select>
+                    <select id="rule-volunteer-select" required></select>
                 </div>
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label for="rule-type-select">Tipo de Regra</label>
-                    <select id="rule-type-select" onchange="updateRuleForm()"></select>
+                    <select id="rule-type-select" onchange="updateRuleForm()">
+                        <option value="">Selecione um tipo</option>
+                        <option value="day_of_week">Dia da Semana Fixo</option>
+                        <option value="ordinal_day_of_week">Dia da Semana no Mês</option>
+                    </select>
                 </div>
-                <div class="form-group" id="rule-value-group"></div>
-            </div>
-             <div class="form-grid" style="margin-top: 1rem;">
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="rule-all-day-checkbox" onchange="toggleAllDay(this, 'regra')">
-                    <label for="rule-all-day-checkbox">Dia Inteiro</label>
-                </div>
+                <!-- Container para os campos dinâmicos da regra -->
+                <div id="rule-fields-container" class="form-group full-width"></div>
+                
+                <!-- ================================================== -->
+                <!--  NOVO: Campos de Horário para as Regras -->
+                <!-- ================================================== -->
                 <div class="form-group">
-                    <label for="rule-start-time">Horário de Início</label>
+                    <label for="rule-start-time">Hora de Início (Opcional)</label>
                     <input type="time" id="rule-start-time">
                 </div>
                 <div class="form-group">
-                    <label for="rule-end-time">Horário de Fim</label>
+                    <label for="rule-end-time">Hora de Fim (Opcional)</label>
                     <input type="time" id="rule-end-time">
                 </div>
-                <div class="form-group">
-                    <button class="button" onclick="addRule()">Adicionar Regra</button>
-                </div>
+                <p class="full-width" style="font-size: 0.8rem; color: var(--text-secondary); margin: -0.5rem 0 0 0;">Deixe os horários em branco para a regra valer para o dia inteiro.</p>
+
             </div>
+            <button class="button" style="margin-top: 1.5rem; width: 100%;" onclick="addUnavailabilityRule()">Adicionar Regra</button>
         </div>
 
-        <!-- Lista de Regras -->
+        <!-- Card com a Lista de Regras (ATUALIZADO) -->
         <div class="card">
-            <h2 class="card-title">Regras Cadastradas</h2>
-            <ul id="rule-list" class="list"></ul>
+            <h2 class="form-title">Regras Cadastradas</h2>
+            <ul id="rule-list" class="unavailability-list"></ul>
         </div>
     </div>
 
@@ -154,185 +141,159 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
 
-    const loadingContainer = document.getElementById('loading-container');
-    const mainContent = document.getElementById('main-content');
-    const volunteerSelect = document.getElementById('volunteer-select');
-    const ruleVolunteerSelect = document.getElementById('rule-volunteer-select');
-    const unavailabilityList = document.getElementById('unavailability-list');
-    const ruleList = document.getElementById('rule-list');
-    const ruleTypeSelect = document.getElementById('rule-type-select');
-
-    const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
-    const ordinals = ["Primeiro(a)", "Segundo(a)", "Terceiro(a)", "Quarto(a)", "Último(a)"];
-
-    function formatDateOnly(isoString) {
-        if (!isoString) return 'N/A';
-        return new Date(isoString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+    // --- Funções para Indisponibilidades Pontuais (sem alterações) ---
+    function formatDateTime(dateString) {
+        if (!dateString) return 'Data inválida';
+        const date = new Date(dateString);
+        return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
     }
-
-    function renderUnavailabilityList(unavailabilities) {
-        if (!unavailabilities || unavailabilities.length === 0) {
-            unavailabilityList.innerHTML = '<li>Nenhuma indisponibilidade pontual cadastrada.</li>';
-            return;
-        }
-        unavailabilityList.innerHTML = unavailabilities.map(item => {
-            let dateDescription = '';
-            if (item.start_time && item.end_time) {
-                dateDescription = `${new Date(item.start_time).toLocaleString('pt-BR')} até ${new Date(item.end_time).toLocaleString('pt-BR')}`;
-            } else {
-                // Se não tem hora, usa a data que salvamos
-                dateDescription = `${formatDateOnly(item.start_date)} (Dia Inteiro)`;
-            }
-            return `
-                <li class="list-item">
-                    <div class="list-item-content">
-                        <strong>${item.members.full_name}</strong>
-                        <small>${dateDescription}</small>
-                        ${item.reason ? `<small>Motivo: ${item.reason}</small>` : ''}
-                    </div>
-                    <button class="remove-btn" onclick="removeUnavailability('${item.id}')">&times;</button>
-                </li>`;
-        }).join('');
-    }
-
-    function renderRuleList(rules) {
-        if (!rules || rules.length === 0) {
-            ruleList.innerHTML = '<li>Nenhuma regra cadastrada.</li>';
-            return;
-        }
-        ruleList.innerHTML = rules.map(item => {
-            let description = '';
-            if (item.rule_type === 'day_of_week') {
-                description = `Toda ${weekdays[item.rule_value]}`;
-            } else if (item.rule_type === 'ordinal_day_of_week') {
-                description = `Toda ${ordinals[item.ordinal - 1]} ${weekdays[item.rule_value]} do mês`;
-            }
-            if (item.start_time && item.end_time) {
-                description += `, das ${item.start_time.slice(0, 5)} às ${item.end_time.slice(0, 5)}`;
-            } else {
-                description += ', Dia Inteiro';
-            }
-            return `
-                <li class="list-item">
-                    <div class="list-item-content">
-                        <strong>${item.members.full_name}</strong>
-                        <small>${description}</small>
-                    </div>
-                    <button class="remove-btn" onclick="removeRule('${item.id}')">&times;</button>
-                </li>`;
-        }).join('');
-    }
-
-    function toggleAllDay(checkbox, type) {
-        const startInput = document.getElementById(type === 'pontual' ? 'start-time' : 'rule-start-time');
-        const endInput = document.getElementById(type === 'pontual' ? 'end-time' : 'rule-end-time');
-        const isChecked = checkbox.checked;
-
-        startInput.disabled = isChecked;
-        endInput.disabled = isChecked;
-        startInput.style.backgroundColor = isChecked ? '#e5e7eb' : 'white';
-        endInput.style.backgroundColor = isChecked ? '#e5e7eb' : 'white';
-
+    function toggleTimeFields() {
+        const isChecked = document.getElementById('all-day-checkbox').checked;
+        const startTimeInput = document.getElementById('start-time');
+        const endTimeInput = document.getElementById('end-time');
+        startTimeInput.disabled = isChecked;
+        endTimeInput.disabled = isChecked;
         if (isChecked) {
-            startInput.value = '';
-            endInput.value = '';
+            startTimeInput.value = '';
+            endTimeInput.value = '';
         }
     }
-
+    function renderUnavailabilities(items) {
+        const list = document.getElementById('unavailability-list');
+        if (!items || items.length === 0) {
+            list.innerHTML = '<li style="padding: 1rem; text-align: center; color: var(--text-secondary);">Nenhuma indisponibilidade pontual cadastrada.</li>';
+            return;
+        }
+        list.innerHTML = items.map(item => `
+            <li class="unavailability-item" id="item-${item.id}">
+                <div class="unavailability-info">
+                    <span><strong>${item.members.full_name}</strong>: de ${formatDateTime(item.start_time)} até ${formatDateTime(item.end_time)}</span>
+                    ${item.reason ? `<span style="color: var(--text-secondary); margin-left: 0.5rem;">- ${item.reason}</span>` : ''}
+                </div>
+                <button class="remove-btn" onclick="removeUnavailability('${item.id}')" title="Remover">&times;</button>
+            </li>
+        `).join('');
+    }
     async function addUnavailability() {
-        const member_id = volunteerSelect.value;
-        const start_date = document.getElementById('start-date').value;
-        const end_date = document.getElementById('end-date').value;
-        const isAllDay = document.getElementById('all-day-checkbox').checked;
-        const startTimeValue = document.getElementById('start-time').value;
-        const endTimeValue = document.getElementById('end-time').value;
+        const member_id = document.getElementById('volunteer-select').value;
+        const startDate = document.getElementById('start-date').value;
+        let startTime = document.getElementById('start-time').value;
+        let endDate = document.getElementById('end-date').value;
+        let endTime = document.getElementById('end-time').value;
         const reason = document.getElementById('reason').value;
-
-        if (!member_id || !start_date || !end_date) {
-            alert('Por favor, selecione um voluntário e preencha as datas de início e fim.');
-            return;
-        }
-        if (!isAllDay && (!startTimeValue || !endTimeValue)) {
-            alert('Por favor, preencha os horários de início e fim, ou marque "Dia Inteiro".');
-            return;
-        }
-
-        const start_time = isAllDay ? null : `${start_date}T${startTimeValue}`;
-        const end_time = isAllDay ? null : `${end_date}T${endTimeValue}`;
-
+        const isAllDay = document.getElementById('all-day-checkbox').checked;
+        if (!member_id || !startDate) { alert('Por favor, selecione um voluntário e uma data de início.'); return; }
+        if (isAllDay) { startTime = '00:00'; endTime = '23:59'; } 
+        else if (!startTime || !endTime) { alert('Por favor, preencha os horários de início e fim, ou marque "O dia inteiro".'); return; }
+        if (!endDate) { endDate = startDate; }
+        const final_start_time = `${startDate}T${startTime}:00`;
+        const final_end_time = `${endDate}T${endTime}:00`;
         try {
-            const { error } = await supabaseClient.functions.invoke('create-unavailability', {
-                body: { member_id, start_date, end_date, start_time, end_time, reason }
-            });
+            const { error } = await supabaseClient.functions.invoke('create-unavailability', { body: { member_id, start_time: final_start_time, end_time: final_end_time, reason } });
             if (error) throw error;
             alert('Indisponibilidade adicionada com sucesso!');
             initializePage();
-        } catch (error) {
-            alert(`Erro ao adicionar: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao adicionar: ${error.message}`); }
     }
-
-    async function removeUnavailability(id) {
+    async function removeUnavailability(unavailabilityId) {
         if (!confirm('Tem certeza que deseja remover esta indisponibilidade?')) return;
         try {
-            const { error } = await supabaseClient.functions.invoke('delete-unavailability', { body: { unavailability_id: id } });
+            const { error } = await supabaseClient.functions.invoke('delete-unavailability', { body: { unavailability_id: unavailabilityId } });
             if (error) throw error;
-            initializePage();
+            const itemToRemove = document.getElementById(`item-${unavailabilityId}`);
+            if (itemToRemove) itemToRemove.remove();
         } catch (error) { alert(`Erro ao remover: ${error.message}`); }
     }
-    
+
+    // --- Funções para Regras de Indisponibilidade (ATUALIZADAS) ---
     function updateRuleForm() {
-        const ruleType = ruleTypeSelect.value;
-        const container = document.getElementById('rule-value-group');
+        const ruleType = document.getElementById('rule-type-select').value;
+        const container = document.getElementById('rule-fields-container');
+        container.innerHTML = '';
         if (ruleType === 'day_of_week') {
             container.innerHTML = `
-                <label for="rule-day-select">Dia da Semana</label>
-                <select id="rule-day-select">
-                    ${weekdays.map((day, index) => `<option value="${index}">${day}</option>`).join('')}
+                <label>Selecione o Dia da Semana</label>
+                <select id="rule-value-select">
+                    <option value="0">Domingo</option><option value="1">Segunda-feira</option><option value="2">Terça-feira</option>
+                    <option value="3">Quarta-feira</option><option value="4">Quinta-feira</option><option value="5">Sexta-feira</option>
+                    <option value="6">Sábado</option>
                 </select>`;
         } else if (ruleType === 'ordinal_day_of_week') {
             container.innerHTML = `
-                <label for="rule-ordinal-select">Ocorrência no Mês</label>
-                <select id="rule-ordinal-select">
-                    ${ordinals.map((ord, index) => `<option value="${index + 1}">${ord}</option>`).join('')}
-                </select>
-                <label for="rule-day-select">Dia da Semana</label>
-                <select id="rule-day-select">
-                    ${weekdays.map((day, index) => `<option value="${index}">${day}</option>`).join('')}
-                </select>`;
+                <div class="form-grid" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label>Selecione a Ordem</label>
+                        <select id="rule-ordinal-select">
+                            <option value="1">Primeiro(a)</option><option value="2">Segundo(a)</option><option value="3">Terceiro(a)</option>
+                            <option value="4">Quarto(a)</option><option value="5">Último(a)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Selecione o Dia da Semana</label>
+                        <select id="rule-value-select">
+                            <option value="0">Domingo</option><option value="1">Segunda-feira</option><option value="2">Terça-feira</option>
+                            <option value="3">Quarta-feira</option><option value="4">Quinta-feira</option><option value="5">Sexta-feira</option>
+                            <option value="6">Sábado</option>
+                        </select>
+                    </div>
+                </div>`;
         }
     }
 
-    async function addRule() {
-        const member_id = ruleVolunteerSelect.value;
-        const rule_type = ruleTypeSelect.value;
-        const isAllDay = document.getElementById('rule-all-day-checkbox').checked;
-        const start_time = isAllDay ? null : document.getElementById('rule-start-time').value;
-        const end_time = isAllDay ? null : document.getElementById('rule-end-time').value;
-        
-        let rule_value = null;
-        let ordinal = null;
-
-        if (rule_type === 'day_of_week') {
-            rule_value = document.getElementById('rule-day-select').value;
-        } else if (rule_type === 'ordinal_day_of_week') {
-            rule_value = document.getElementById('rule-day-select').value;
-            ordinal = document.getElementById('rule-ordinal-select').value;
-        }
-
-        if (!member_id || rule_value === null) {
-            alert('Por favor, preencha todos os campos da regra.');
+    // Função renderRuleList ATUALIZADA para mostrar os horários
+    function renderRuleList(rules) {
+        const list = document.getElementById('rule-list');
+        if (!rules || rules.length === 0) {
+            list.innerHTML = '<li style="padding: 1rem; text-align: center; color: var(--text-secondary);">Nenhuma regra cadastrada.</li>';
             return;
         }
-        if (!isAllDay && (!start_time || !end_time)) {
-            alert('Por favor, preencha os horários de início e fim, ou marque "Dia Inteiro".');
+        const weekdays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const ordinals = ["", "Primeiro(a)", "Segundo(a)", "Terceiro(a)", "Quarto(a)", "Último(a)"];
+        list.innerHTML = rules.map(rule => {
+            let description = 'Regra inválida';
+            if (rule.rule_type === 'day_of_week') {
+                description = `Toda ${weekdays[rule.rule_value]}`;
+            } else if (rule.rule_type === 'ordinal_day_of_week') {
+                description = `Todo(a) ${ordinals[rule.ordinal]} ${weekdays[rule.rule_value]} do mês`;
+            }
+            // Adiciona a informação de horário se existir
+            if (rule.start_time && rule.end_time) {
+                description += `, das ${rule.start_time.substring(0, 5)} às ${rule.end_time.substring(0, 5)}`;
+            }
+            return `
+                <li class="unavailability-item" id="rule-${rule.id}">
+                    <div class="unavailability-info">
+                        <span><strong>${rule.members.full_name}</strong>: ${description}</span>
+                    </div>
+                    <button class="remove-btn" onclick="removeUnavailabilityRule('${rule.id}')" title="Remover Regra">&times;</button>
+                </li>`;
+        }).join('');
+    }
+
+    // Função addUnavailabilityRule ATUALIZADA para ler os horários
+    async function addUnavailabilityRule() {
+        const member_id = document.getElementById('rule-volunteer-select').value;
+        const rule_type = document.getElementById('rule-type-select').value;
+        const start_time = document.getElementById('rule-start-time').value || null; // Envia null se vazio
+        const end_time = document.getElementById('rule-end-time').value || null; // Envia null se vazio
+
+        if (!member_id || !rule_type) {
+            alert('Selecione um voluntário e um tipo de regra.');
             return;
         }
-        
+
+        let rule_value = document.getElementById('rule-value-select')?.value;
+        let ordinal = document.getElementById('rule-ordinal-select')?.value;
+
+        if (!rule_value) {
+            alert('Preencha os detalhes da regra.');
+            return;
+        }
+
+        const ruleData = { member_id, rule_type, rule_value: parseInt(rule_value), ordinal: ordinal ? parseInt(ordinal) : null, start_time, end_time };
+
         try {
-            const { error } = await supabaseClient.functions.invoke('create-unavailability-rule', {
-                body: { member_id, rule_type, rule_value: parseInt(rule_value), ordinal, start_time, end_time }
-            });
+            const { error } = await supabaseClient.functions.invoke('create-unavailability-rule', { body: ruleData });
             if (error) throw error;
             alert('Regra adicionada com sucesso!');
             initializePage();
@@ -341,43 +302,42 @@
         }
     }
 
-    async function removeRule(id) {
-        if (!confirm('Tem certeza que deseja remover esta regra?')) return;
+    async function removeUnavailabilityRule(ruleId) {
+        if (!confirm('Tem certeza que deseja remover esta regra permanentemente?')) return;
         try {
-            const { error } = await supabaseClient.functions.invoke('delete-unavailability-rule', { body: { rule_id: id } });
+            const { error } = await supabaseClient.functions.invoke('delete-unavailability-rule', { body: { rule_id: ruleId } });
             if (error) throw error;
-            initializePage();
-        } catch (error) { alert(`Erro ao remover regra: ${error.message}`); }
+            const itemToRemove = document.getElementById(`rule-${ruleId}`);
+            if (itemToRemove) itemToRemove.remove();
+        } catch (error) {
+            alert(`Erro ao remover regra: ${error.message}`);
+        }
     }
 
+    // Função initializePage (sem alterações, já busca tudo que precisa)
     async function initializePage() {
-        mainContent.style.display = 'none';
-        loadingContainer.style.display = 'block';
+        const loadingContainer = document.getElementById('loading-container');
+        const mainContent = document.getElementById('main-content');
         try {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = '/login'; return; }
-
-            const { data: volunteers, error: volError } = await supabaseClient.functions.invoke('get-ministry-volunteers-simple');
-            if (volError) throw volError;
-            
-            const optionsHTML = volunteers.map(v => `<option value="${v.id}">${v.full_name}</option>`).join('');
-            volunteerSelect.innerHTML = `<option value="">Selecione um voluntário</option>${optionsHTML}`;
-            ruleVolunteerSelect.innerHTML = `<option value="">Selecione um voluntário</option>${optionsHTML}`;
-            
-            ruleTypeSelect.innerHTML = `
-                <option value="day_of_week">Dia da Semana Fixo</option>
-                <option value="ordinal_day_of_week">Dia da Semana no Mês</option>
-            `;
-            
-            const { data: unavailabilities, error: unavError } = await supabaseClient.from('member_unavailability').select('*, members(full_name)').order('start_date', { ascending: false });
-            if (unavError) throw unavError;
-            renderUnavailabilityList(unavailabilities);
-
-            const { data: rules, error: rulesError } = await supabaseClient.from('unavailability_rules').select('*, members(full_name)').order('created_at', { ascending: false });
+            const { data: volunteers, error: volunteersError } = await supabaseClient.functions.invoke('get-ministry-volunteers-simple');
+            if (volunteersError) throw volunteersError;
+            const volunteerSelect = document.getElementById('volunteer-select');
+            const ruleVolunteerSelect = document.getElementById('rule-volunteer-select');
+            volunteerSelect.innerHTML = '<option value="">Selecione um voluntário</option>';
+            ruleVolunteerSelect.innerHTML = '<option value="">Selecione um voluntário</option>';
+            volunteers.forEach(v => {
+                const optionHTML = `<option value="${v.id}">${v.full_name}</option>`;
+                volunteerSelect.innerHTML += optionHTML;
+                ruleVolunteerSelect.innerHTML += optionHTML;
+            });
+            const { data: unavailabilities, error: unavailabilitiesError } = await supabaseClient.from('member_unavailability').select(`*, members(full_name)`).order('start_time', { ascending: false });
+            if (unavailabilitiesError) throw unavailabilitiesError;
+            renderUnavailabilities(unavailabilities);
+            const { data: rules, error: rulesError } = await supabaseClient.from('unavailability_rules').select(`*, members(full_name)`).order('created_at', { ascending: false });
             if (rulesError) throw rulesError;
             renderRuleList(rules);
-
-            updateRuleForm();
             loadingContainer.style.display = 'none';
             mainContent.style.display = 'block';
         } catch (error) {
