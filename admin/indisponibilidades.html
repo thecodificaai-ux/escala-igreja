@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* ================================================== */
+        /*  CSS CORRIGIDO E PADRONIZADO                      */
+        /* ================================================== */
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
@@ -19,55 +22,80 @@
         .container { max-width: 1200px; margin: 0 auto; }
         .header { 
             display: flex; 
-            justify-content: space-Com certeza. É uma ótima ideia ter o código HTML limpo e separado para a página de indisponibilidades. Isso facilita a manutenção e futuras atualizações.
-
-Abaixo está o código HTML completo e consolidado para o arquivo `/admin/indisponibilidades.html`. Este código contém toda a estrutura da página, incluindo:
-1.  O cabeçalho com os botões de navegação.
-2.  O card para adicionar indisponibilidades pontuais (com data e hora).
-3.  A lista onde as indisponibilidades pontuais são exibidas.
-4.  O card para adicionar regras de indisponibilidade recorrentes (com o formulário dinâmico).
-5.  A lista onde as regras são exibidas.
-
-Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/indisponibilidades.html`. O JavaScript que o acompanha já está no final do arquivo, dentro da tag `<script>`.
-
----
-
-### **Código Completo: `/admin/indisponibilidades.html`**
-
-```html
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Indisponibilidades</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
-            --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
-            --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --radius: 12px;
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 2rem; 
+            flex-wrap: wrap; 
+            gap: 1rem; 
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        h1 { font-weight: 700; font-size: 2.25rem; }
-        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
+        .header-actions { 
+            display: flex; 
+            gap: 0.75rem; 
+            flex-wrap: wrap; 
+        }
+        h1 { font-weight: 700; font-size: 2.25rem; margin: 0; }
+        .button { 
+            background-color: var(--primary-color); 
+            color: white; 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            border: none; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+        }
         .button:hover { background-color: var(--primary-dark); }
-        .card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; padding: 1.5rem; }
+        .button.secondary { background-color: var(--text-secondary); }
+        .card { 
+            background: var(--background); 
+            border-radius: var(--radius); 
+            box-shadow: var(--shadow-md); 
+            margin-bottom: 2rem; 
+            padding: 1.5rem; 
+        }
         .card-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.5rem 0; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .form-group input, .form-group select { padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; }
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1rem; 
+            align-items: flex-end; 
+        }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { font-weight: 500; font-size: 0.9rem; }
+        .form-group input, .form-group select { 
+            padding: 0.75rem; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            font-size: 1rem; 
+            width: 100%;
+            box-sizing: border-box;
+        }
         .list { list-style: none; padding: 0; margin: 0; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--secondary-color); }
+        .list-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1rem; 
+            border-bottom: 1px solid var(--secondary-color); 
+            gap: 1rem;
+        }
         .list-item:last-child { border-bottom: none; }
-        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.5rem; cursor: pointer; line-height: 1; }
+        .list-item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .remove-btn { 
+            background: none; 
+            border: none; 
+            color: var(--error-color); 
+            font-weight: bold; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            line-height: 1; 
+            padding: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -110,9 +138,7 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
         <!-- Lista de Indisponibilidades Pontuais -->
         <div class="card">
             <h2 class="card-title">Indisponibilidades Pontuais Cadastradas</h2>
-            <ul id="unavailability-list" class="list">
-                <!-- Itens serão inseridos aqui pelo JavaScript -->
-            </ul>
+            <ul id="unavailability-list" class="list"></ul>
         </div>
 
         <!-- Card para Regras de Indisponibilidade -->
@@ -125,14 +151,9 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
                 </div>
                 <div class="form-group">
                     <label for="rule-type-select">Tipo de Regra</label>
-                    <select id="rule-type-select" onchange="updateRuleForm()">
-                        <option value="day_of_week">Dia da Semana Fixo</option>
-                        <option value="ordinal_day_of_week">Dia da Semana no Mês</option>
-                    </select>
+                    <select id="rule-type-select" onchange="updateRuleForm()"></select>
                 </div>
-                <div class="form-group" id="rule-value-group">
-                    <!-- Campos dinâmicos aqui -->
-                </div>
+                <div class="form-group" id="rule-value-group"></div>
                  <div class="form-group">
                     <label for="rule-start-time">Horário de Início (Opcional)</label>
                     <input type="time" id="rule-start-time">
@@ -150,14 +171,11 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
         <!-- Lista de Regras -->
         <div class="card">
             <h2 class="card-title">Regras Cadastradas</h2>
-            <ul id="rule-list" class="list">
-                <!-- Itens serão inseridos aqui pelo JavaScript -->
-            </ul>
+            <ul id="rule-list" class="list"></ul>
         </div>
     </div>
 
 <script>
-    // SEU JAVASCRIPT COMPLETO AQUI
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
@@ -168,16 +186,14 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
     const ruleVolunteerSelect = document.getElementById('rule-volunteer-select');
     const unavailabilityList = document.getElementById('unavailability-list');
     const ruleList = document.getElementById('rule-list');
+    const ruleTypeSelect = document.getElementById('rule-type-select');
 
     const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
     const ordinals = ["Primeiro(a)", "Segundo(a)", "Terceiro(a)", "Quarto(a)", "Último(a)"];
 
     function formatDateTime(isoString) {
         if (!isoString) return 'N/A';
-        return new Date(isoString).toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
+        return new Date(isoString).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
     function renderUnavailabilityList(unavailabilities) {
@@ -187,16 +203,13 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
         }
         unavailabilityList.innerHTML = unavailabilities.map(item => `
             <li class="list-item">
-                <div>
-                    <strong>${item.members.full_name}</strong>  
-
+                <div class="list-item-content">
+                    <strong>${item.members.full_name}</strong>
                     <small>${formatDateTime(item.start_time)} até ${formatDateTime(item.end_time)}</small>
-                    ${item.reason ? `  
-<small>Motivo: ${item.reason}</small>` : ''}
+                    ${item.reason ? `<small>Motivo: ${item.reason}</small>` : ''}
                 </div>
                 <button class="remove-btn" onclick="removeUnavailability('${item.id}')">&times;</button>
-            </li>
-        `).join('');
+            </li>`).join('');
     }
 
     function renderRuleList(rules) {
@@ -216,9 +229,8 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
             }
             return `
                 <li class="list-item">
-                    <div>
-                        <strong>${item.members.full_name}</strong>  
-
+                    <div class="list-item-content">
+                        <strong>${item.members.full_name}</strong>
                         <small>${description}</small>
                     </div>
                     <button class="remove-btn" onclick="removeRule('${item.id}')">&times;</button>
@@ -231,21 +243,16 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
         const start_time = document.getElementById('start-datetime').value;
         const end_time = document.getElementById('end-datetime').value;
         const reason = document.getElementById('reason').value;
-
         if (!member_id || !start_time || !end_time) {
             alert('Por favor, selecione um voluntário e preencha as datas de início e fim.');
             return;
         }
         try {
-            const { error } = await supabaseClient.functions.invoke('create-unavailability', {
-                body: { member_id, start_time, end_time, reason }
-            });
+            const { error } = await supabaseClient.functions.invoke('create-unavailability', { body: { member_id, start_time, end_time, reason } });
             if (error) throw error;
             alert('Indisponibilidade adicionada com sucesso!');
-            initializePage(); // Recarrega a página
-        } catch (error) {
-            alert(`Erro ao adicionar: ${error.message}`);
-        }
+            initializePage();
+        } catch (error) { alert(`Erro ao adicionar: ${error.message}`); }
     }
 
     async function removeUnavailability(id) {
@@ -254,13 +261,11 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
             const { error } = await supabaseClient.functions.invoke('delete-unavailability', { body: { unavailability_id: id } });
             if (error) throw error;
             initializePage();
-        } catch (error) {
-            alert(`Erro ao remover: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao remover: ${error.message}`); }
     }
     
     function updateRuleForm() {
-        const ruleType = document.getElementById('rule-type-select').value;
+        const ruleType = ruleTypeSelect.value;
         const container = document.getElementById('rule-value-group');
         if (ruleType === 'day_of_week') {
             container.innerHTML = `
@@ -283,35 +288,27 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
 
     async function addRule() {
         const member_id = ruleVolunteerSelect.value;
-        const rule_type = document.getElementById('rule-type-select').value;
+        const rule_type = ruleTypeSelect.value;
         const start_time = document.getElementById('rule-start-time').value || null;
         const end_time = document.getElementById('rule-end-time').value || null;
-        
         let rule_value = null;
         let ordinal = null;
-
         if (rule_type === 'day_of_week') {
             rule_value = document.getElementById('rule-day-select').value;
         } else if (rule_type === 'ordinal_day_of_week') {
             rule_value = document.getElementById('rule-day-select').value;
             ordinal = document.getElementById('rule-ordinal-select').value;
         }
-
         if (!member_id || rule_value === null) {
             alert('Por favor, preencha todos os campos da regra.');
             return;
         }
-        
         try {
-            const { error } = await supabaseClient.functions.invoke('create-unavailability-rule', {
-                body: { member_id, rule_type, rule_value: parseInt(rule_value), ordinal, start_time, end_time }
-            });
+            const { error } = await supabaseClient.functions.invoke('create-unavailability-rule', { body: { member_id, rule_type, rule_value: parseInt(rule_value), ordinal, start_time, end_time } });
             if (error) throw error;
             alert('Regra adicionada com sucesso!');
             initializePage();
-        } catch (error) {
-            alert(`Erro ao adicionar regra: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao adicionar regra: ${error.message}`); }
     }
 
     async function removeRule(id) {
@@ -320,9 +317,7 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
             const { error } = await supabaseClient.functions.invoke('delete-unavailability-rule', { body: { rule_id: id } });
             if (error) throw error;
             initializePage();
-        } catch (error) {
-            alert(`Erro ao remover regra: ${error.message}`);
-        }
+        } catch (error) { alert(`Erro ao remover regra: ${error.message}`); }
     }
 
     async function initializePage() {
@@ -339,6 +334,11 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
             volunteerSelect.innerHTML = `<option value="">Selecione um voluntário</option>${optionsHTML}`;
             ruleVolunteerSelect.innerHTML = `<option value="">Selecione um voluntário</option>${optionsHTML}`;
             
+            ruleTypeSelect.innerHTML = `
+                <option value="day_of_week">Dia da Semana Fixo</option>
+                <option value="ordinal_day_of_week">Dia da Semana no Mês</option>
+            `;
+            
             const { data: unavailabilities, error: unavError } = await supabaseClient.from('member_unavailability').select('*, members(full_name)').order('start_time', { ascending: false });
             if (unavError) throw unavError;
             renderUnavailabilityList(unavailabilities);
@@ -347,7 +347,7 @@ Você só precisa copiar este bloco de código e colar no seu arquivo `/admin/in
             if (rulesError) throw rulesError;
             renderRuleList(rules);
 
-            updateRuleForm(); // Inicializa o formulário de regras
+            updateRuleForm();
             loadingContainer.style.display = 'none';
             mainContent.style.display = 'block';
         } catch (error) {
