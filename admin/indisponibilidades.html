@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Indisponibilidades</title>
+    <title>Gerenciar Escalas</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,128 +11,99 @@
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 );
+            --warning-color: #f59e0b; /* Adicionando cor de aviso */
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* CSS do Cabeçalho ATUALIZADO */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 1.5rem; 
+            flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
+            gap: 1rem; /* Espaçamento entre o título e os botões */
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.75rem; /* Espaçamento entre os botões */
+            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+        }
+
         h1 { font-weight: 700; font-size: 2.25rem; }
         .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
         .button:hover { background-color: var(--primary-dark); }
+        .button.secondary { background-color: var(--text-secondary); }
         .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        .card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; padding: 1.5rem; }
-        .form-title { font-size: 1.25rem; font-weight: 600; margin: 0 0 1.5rem 0; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group.full-width { grid-column: 1 / -1; }
-        .form-group label { font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .form-group select, .form-group input[type="date"], .form-group input[type="time"], .form-group input[type="text"] {
-            padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; font-family: 'Inter', sans-serif;
-        }
-        .form-group input:disabled { background-color: var(--secondary-color); cursor: not-allowed; }
-        .unavailability-list { list-style: none; padding: 0; margin: 0; }
-        .unavailability-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 1rem; }
-        .unavailability-item:last-child { border-bottom: none; }
-        .unavailability-info strong { color: var(--primary-color); }
-        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; }
-        
-        @media (max-width: 768px) {
-            body { padding: 1rem; }
-            h1 { font-size: 1.75rem; }
-            .form-grid { grid-template-columns: 1fr; }
-        }
+        .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; }
+        .event-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
+        .event-title { font-size: 1.5rem; font-weight: 600; margin: 0; }
+        .event-date { font-size: 1rem; font-weight: 500; color: var(--primary-color); margin-top: 0.25rem; }
+        .event-body { padding: 0 1.5rem 1.5rem 1.5rem; }
+        .turn-wrapper { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
+        .turn-wrapper:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+        .turn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .turn-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin: 0; }
+        .button-add-req { background-color: var(--success-color); color: white; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .button-add-req:hover { background-color: #059669; }
+        .requirements-list { list-style: none; padding: 0; margin: 0; }
+        .requirement-item { padding: 1rem 0; border-bottom: 1px solid var(--secondary-color); }
+        .requirement-item:last-child { border-bottom: none; }
+        .requirement-header { display: flex; justify-content: space-between; align-items: center; }
+        .requirement-role-group { display: flex; align-items: center; gap: 0.75rem; }
+        .requirement-role { font-size: 1.1rem; font-weight: 600; }
+        .gender-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 12px; background-color: var(--secondary-color); color: var(--text-secondary); font-weight: 500; }
+        .requirement-slots { font-size: 0.9rem; color: var(--text-secondary); }
+        .scaled-list { list-style: none; padding: 0.5rem 0 0 1rem; margin-top: 0.5rem; border-left: 2px solid var(--primary-color); }
+        .scaled-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
+        .scaled-info { display: flex; align-items: center; gap: 0.75rem; }
+        .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
+        .add-requirement-form { padding-top: 1rem; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .modal-title { margin: 0; font-size: 1.5rem; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        .volunteer-list { max-height: 40vh; overflow-y: auto; list-style: none; padding: 0; margin: 0 -1rem; }
+        .volunteer-list-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .volunteer-list-item:hover { background-color: var(--secondary-color); }
     </style>
 </head>
 <body>
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
+        
+        <!-- ================================================== -->
+        <!--  CABEÇALHO ATUALIZADO COM OS NOVOS BOTÕES -->
+        <!-- ================================================== -->
         <div class="header">
-            <h1>Indisponibilidades</h1>
-            <a href="/admin" class="button">Voltar ao Dashboard</a>
-        </div>
-
-        <!-- Card de Indisponibilidades Pontuais (sem alterações) -->
-        <div class="card">
-            <h2 class="form-title">Adicionar Indisponibilidade Pontual</h2>
-            <div class="form-grid">
-                <div class="form-group full-width">
-                    <label for="volunteer-select">Voluntário</label>
-                    <select id="volunteer-select" required></select>
-                </div>
-                <div class="form-group">
-                    <label for="start-date">Data de Início</label>
-                    <input type="date" id="start-date" required>
-                </div>
-                <div class="form-group">
-                    <label for="start-time">Hora de Início</label>
-                    <input type="time" id="start-time">
-                </div>
-                <div class="form-group">
-                    <label for="end-date">Data de Fim</label>
-                    <input type="date" id="end-date">
-                </div>
-                <div class="form-group">
-                    <label for="end-time">Hora de Fim</label>
-                    <input type="time" id="end-time">
-                </div>
-                <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-                    <input type="checkbox" id="all-day-checkbox" onchange="toggleTimeFields()" style="width: auto;">
-                    <label for="all-day-checkbox" style="margin-bottom: 0;">O dia inteiro</label>
-                </div>
-                <div class="form-group full-width">
-                    <label for="reason">Motivo (opcional)</label>
-                    <input type="text" id="reason" placeholder="Ex: Viagem, Trabalho">
-                </div>
+            <h1>Gerenciar Escalas</h1>
+            <div class="header-actions">
+                <a href="/admin/escala-geral.html" class="button secondary">Ver Escala Geral</a>
+                <a href="/admin/indisponibilidades.html" class="button" style="background-color: var(--warning-color);">Indisponibilidades</a>
+                <a href="/admin" class="button">Voltar ao Dashboard</a>
             </div>
-            <button class="button" style="margin-top: 1.5rem; width: 100%;" onclick="addUnavailability()">Adicionar Indisp. Pontual</button>
         </div>
 
-        <div class="card">
-            <h2 class="form-title">Indisponibilidades Pontuais Cadastradas</h2>
-            <ul id="unavailability-list" class="unavailability-list"></ul>
-        </div>
+        <div id="events-container" class="events-container"></div>
+    </div>
 
-        <!-- Card para Adicionar Regras de Indisponibilidade (ATUALIZADO) -->
-        <div class="card">
-            <h2 class="form-title">Adicionar Regra de Indisponibilidade</h2>
-            <div class="form-grid">
-                <div class="form-group full-width">
-                    <label for="rule-volunteer-select">Voluntário</label>
-                    <select id="rule-volunteer-select" required></select>
-                </div>
-                <div class="form-group full-width">
-                    <label for="rule-type-select">Tipo de Regra</label>
-                    <select id="rule-type-select" onchange="updateRuleForm()">
-                        <option value="">Selecione um tipo</option>
-                        <option value="day_of_week">Dia da Semana Fixo</option>
-                        <option value="ordinal_day_of_week">Dia da Semana no Mês</option>
-                    </select>
-                </div>
-                <!-- Container para os campos dinâmicos da regra -->
-                <div id="rule-fields-container" class="form-group full-width"></div>
-                
-                <!-- ================================================== -->
-                <!--  NOVO: Campos de Horário para as Regras -->
-                <!-- ================================================== -->
-                <div class="form-group">
-                    <label for="rule-start-time">Hora de Início (Opcional)</label>
-                    <input type="time" id="rule-start-time">
-                </div>
-                <div class="form-group">
-                    <label for="rule-end-time">Hora de Fim (Opcional)</label>
-                    <input type="time" id="rule-end-time">
-                </div>
-                <p class="full-width" style="font-size: 0.8rem; color: var(--text-secondary); margin: -0.5rem 0 0 0;">Deixe os horários em branco para a regra valer para o dia inteiro.</p>
-
+    <div id="add-volunteer-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title" class="modal-title">Adicionar Voluntário</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <button class="button" style="margin-top: 1.5rem; width: 100%;" onclick="addUnavailabilityRule()">Adicionar Regra</button>
-        </div>
-
-        <!-- Card com a Lista de Regras (ATUALIZADO) -->
-        <div class="card">
-            <h2 class="form-title">Regras Cadastradas</h2>
-            <ul id="rule-list" class="unavailability-list"></ul>
+            <div id="modal-body">
+                <p>Buscando voluntários disponíveis...</p>
+                <ul id="modal-volunteer-list" class="volunteer-list"></ul>
+            </div>
         </div>
     </div>
 
