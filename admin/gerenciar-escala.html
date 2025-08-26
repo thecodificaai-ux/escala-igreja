@@ -17,32 +17,6 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 1rem; }
         @media (min-width: 768px) { body { padding: 2rem; } }
 
-        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO (ADICIONADO) --- */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
-        .spinner {
-            width: 56px;
-            height: 56px;
-            border: 7px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        /* --- FIM DOS ESTILOS DO SPINNER --- */
-
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
@@ -52,10 +26,13 @@
         .button:hover { background-color: var(--primary-dark); }
         .button.secondary { background-color: var(--text-secondary); }
         .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+        /* --- NOVOS ESTILOS PARA FILTROS E ACORDEÃO --- */
         .filters-bar { background: var(--background); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; box-shadow: var(--shadow-md); }
         .filter-group { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; min-width: 150px; }
         .filter-group label { font-weight: 500; font-size: 0.9rem; }
         .filter-group input { padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; }
+        
         .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 1rem; overflow: hidden; }
         .event-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; cursor: pointer; transition: background-color 0.2s; }
         .event-header:hover { background-color: #f9fafb; }
@@ -63,7 +40,9 @@
         .attention-indicator { width: 10px; height: 10px; background-color: var(--warning-color); border-radius: 50%; }
         .event-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
         .event-date { font-size: 1rem; font-weight: 500; color: var(--text-secondary); margin-top: 0.25rem; }
-        .event-body { padding: 0 1.5rem 1.5rem 1.5rem; border-top: 1px solid var(--border-color); display: none; }
+        .event-body { padding: 0 1.5rem 1.5rem 1.5rem; border-top: 1px solid var(--border-color); display: none; /* Começa escondido */ }
+        /* --- FIM DOS NOVOS ESTILOS --- */
+
         .turn-wrapper { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
         .turn-wrapper:first-child { margin-top: 0; padding-top: 0; border-top: none; }
         .turn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -95,13 +74,9 @@
     </style>
 </head>
 <body>
-    <!-- OVERLAY DE CARREGAMENTO (ADICIONADO) -->
-    <div id="loading-overlay" class="loading-overlay" style="display: none;">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- O antigo 'loading-container' foi removido pois o overlay o substitui -->
+    <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
+        
         <div class="header">
             <h1>Gerenciar Escalas</h1>
             <div class="header-actions">
@@ -110,6 +85,8 @@
                 <a href="/admin" class="button">Voltar ao Dashboard</a>
             </div>
         </div>
+
+        <!-- NOVA BARRA DE FILTROS -->
         <div class="filters-bar">
             <div class="filter-group">
                 <label for="filter-name">Buscar por Nome</label>
@@ -125,8 +102,13 @@
             </div>
             <button class="button" onclick="applyFilters(true)">Limpar</button>
         </div>
-        <div id="events-container" class="events-container"></div>
+
+        <div id="events-container" class="events-container">
+            <!-- Eventos serão renderizados aqui -->
+        </div>
     </div>
+
+    <!-- Modal (sem alterações) -->
     <div id="add-volunteer-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -149,103 +131,31 @@
     const ministryRoles = ["Projeção", "Transmissão", "Edição", "Foto", "Stories", "Câmera"];
     const genderEnums = ["Ambos", "Masculino", "Feminino"];
 
-    let allEventsData = [];
     let currentRequirementId = null;
+    let allEventsData = []; // Armazena todos os eventos para filtrar no front-end
     const modal = document.getElementById('add-volunteer-modal');
     const modalList = document.getElementById('modal-volunteer-list');
-    const loadingOverlay = document.getElementById('loading-overlay');
 
-    // --- FUNÇÃO PARA RECARREGAMENTO ELEGANTE ---
-    async function reloadData() {
-        const scrollY = window.scrollY;
-        loadingOverlay.style.display = 'flex';
+    function formatTime(dateString) {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    }
 
-        const openEventIds = [];
-        document.querySelectorAll('.event-body').forEach(body => {
-            if (body.style.display === 'block') {
-                openEventIds.push(body.closest('.event-card').dataset.eventId);
-            }
-        });
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const correctedDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+        return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
+    }
 
-        try {
-            const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
-            if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
-            
-            allEventsData = events || [];
-            applyFilters(false, openEventIds);
-        } catch (error) {
-            document.getElementById('events-container').innerHTML = `<p style="color: red;">${error.message}</p>`;
-        } finally {
-            loadingOverlay.style.display = 'none';
-            window.scrollTo(0, scrollY);
+    // --- NOVAS FUNÇÕES DE USABILIDADE ---
+    function toggleEventBody(eventId) {
+        const eventBody = document.querySelector(`.event-card[data-event-id="${eventId}"] .event-body`);
+        if (eventBody) {
+            eventBody.style.display = eventBody.style.display === 'block' ? 'none' : 'block';
         }
     }
 
-    // --- FUNÇÕES DE INTERAÇÃO ---
-    async function saveRequirement(event, turnId) {
-        stopPropagation(event);
-        const role = document.getElementById(`role-select-${turnId}`).value;
-        const gender = document.getElementById(`gender-select-${turnId}`).value;
-        const quantity = document.getElementById(`quantity-input-${turnId}`).value;
-        if (!role || !gender || !quantity || quantity < 1) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-        const button = event.target;
-        button.disabled = true;
-        button.textContent = 'Salvando...';
-        try {
-            const { error } = await supabaseClient.functions.invoke('create-schedule-requirement', {
-                body: { event_id: turnId, role, gender, quantity_needed: parseInt(quantity) }
-            });
-            if (error) throw error;
-            await reloadData();
-        } catch (error) {
-            alert(`Erro ao salvar vaga: ${error.message}`);
-            button.disabled = false;
-            button.textContent = 'Salvar';
-        }
-    }
-
-    async function removeRequirement(event, reqId, role) {
-        stopPropagation(event);
-        if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
-        try {
-            const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', { body: { requirement_id: reqId } });
-            if (error) throw error;
-            await reloadData();
-        } catch (error) {
-            alert(`Erro ao remover vaga: ${error.message}`);
-        }
-    }
-
-    async function removeVolunteer(event, scheduleId, volunteerName) {
-        stopPropagation(event);
-        if (!confirm(`Tem certeza que deseja remover ${volunteerName} desta escala?`)) return;
-        try {
-            const { error } = await supabaseClient.functions.invoke('delete-schedule', { body: { schedule_id: scheduleId } });
-            if (error) throw error;
-            await reloadData();
-        } catch (error) {
-            alert(`Erro ao remover voluntário: ${error.message}`);
-        }
-    }
-
-    async function selectVolunteer(memberId) {
-        try {
-            const { error } = await supabaseClient.functions.invoke('create-schedule', {
-                body: { requirement_id: currentRequirementId, member_id: memberId }
-            });
-            if (error) throw error;
-            closeModal();
-            await reloadData();
-        } catch (error) {
-            alert(`Erro ao escalar voluntário: ${error.message}`);
-        }
-    }
-
-    // --- LÓGICA DE RENDERIZAÇÃO E FILTROS ---
-    function applyFilters(clear = false, openEventIds = []) {
+    function applyFilters(clear = false) {
         const nameFilter = clear ? '' : document.getElementById('filter-name').value.toLowerCase();
         const startDateFilter = clear ? '' : document.getElementById('filter-start-date').value;
         const endDateFilter = clear ? '' : document.getElementById('filter-end-date').value;
@@ -258,24 +168,27 @@
 
         const filteredEvents = allEventsData.filter(event => {
             const eventName = event.name.toLowerCase();
-            const eventDate = event.date;
+            const eventDate = event.date; // Formato YYYY-MM-DD
+
             const nameMatch = eventName.includes(nameFilter);
             const startDateMatch = !startDateFilter || eventDate >= startDateFilter;
             const endDateMatch = !endDateFilter || eventDate <= endDateFilter;
+
             return nameMatch && startDateMatch && endDateMatch;
         });
 
-        renderEvents(filteredEvents, openEventIds);
+        renderEvents(filteredEvents);
     }
+    // --- FIM DAS NOVAS FUNÇÕES ---
 
-    function renderEvents(events, openEventIds = []) {
+    function renderEvents(events) {
         const container = document.getElementById('events-container');
         if (!Array.isArray(events) || events.length === 0) {
             container.innerHTML = '<p>Nenhum evento encontrado para os filtros selecionados.</p>';
             return;
         }
 
-        container.innerHTML = events.map(event => {
+        const finalHTML = events.map(event => {
             const turnos = (event && Array.isArray(event.turnos)) ? event.turnos : [];
             let needsAttention = false;
 
@@ -285,9 +198,11 @@
                     const schedules = (req && Array.isArray(req.schedules)) ? req.schedules : [];
                     const scaledCount = schedules.length;
                     const neededCount = req.quantity_needed || 0;
-                    if (scaledCount < neededCount) needsAttention = true;
-                    const isFull = scaledCount >= neededCount;
+                    if (scaledCount < neededCount) {
+                        needsAttention = true;
+                    }
                     const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
+                    const isFull = scaledCount >= neededCount;
 
                     const scaledVolunteersHTML = schedules.map(schedule => {
                         const member = schedule.member || {};
@@ -320,6 +235,7 @@
 
                 const showTurnoTitle = turnos.length > 1 || (event && event.name) !== (turno && turno.name);
                 const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
+                
                 const roleOptions = ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('');
                 const genderOptions = genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('');
 
@@ -339,9 +255,8 @@
                     </div>`;
             }).join('');
 
-            const isOpen = openEventIds.includes(event.id);
             return `
-                <div class="event-card" data-event-id="${event.id}">
+                <div class="event-card" data-event-id="${event.id}" data-event-date="${event.date}" data-event-name="${event.name}">
                     <div class="event-header" onclick="toggleEventBody('${event.id}')">
                         <div class="event-title-group">
                             ${needsAttention ? '<div class="attention-indicator" title="Este evento tem vagas abertas"></div>' : ''}
@@ -350,14 +265,17 @@
                                 <p class="event-date">${formatDate(event.date)}</p>
                             </div>
                         </div>
+                        <span style="font-size: 1.5rem; color: var(--text-secondary); transform: rotate(90deg);">&#10095;</span>
                     </div>
-                    <div class="event-body" style="display: ${isOpen ? 'block' : 'none'};">${turnosHTML}</div>
+                    <div class="event-body">${turnosHTML}</div>
                 </div>`;
         }).join('');
+        container.innerHTML = finalHTML;
     }
 
-    // --- FUNÇÕES AUXILIARES E MODAL ---
-    function stopPropagation(event) { event.stopPropagation(); }
+    function stopPropagation(event) {
+        event.stopPropagation();
+    }
 
     function toggleAddRequirementForm(event, turnId) {
         stopPropagation(event);
@@ -365,11 +283,52 @@
         if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
     }
 
-    function toggleEventBody(eventId) {
-        const eventBody = document.querySelector(`.event-card[data-event-id="${eventId}"] .event-body`);
-        if (eventBody) {
-            const isOpen = eventBody.style.display === 'block';
-            eventBody.style.display = isOpen ? 'none' : 'block';
+    async function saveRequirement(event, turnId) {
+        stopPropagation(event);
+        const role = document.getElementById(`role-select-${turnId}`).value;
+        const gender = document.getElementById(`gender-select-${turnId}`).value;
+        const quantity = document.getElementById(`quantity-input-${turnId}`).value;
+        if (!role || !gender || !quantity || quantity < 1) {
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
+        const button = event.target;
+        button.disabled = true;
+        button.textContent = 'Salvando...';
+        try {
+            const { error } = await supabaseClient.functions.invoke('create-schedule-requirement', {
+                body: { event_id: turnId, role, gender, quantity_needed: parseInt(quantity) }
+            });
+            if (error) throw error;
+            initializePage();
+        } catch (error) {
+            alert(`Erro ao salvar vaga: ${error.message}`);
+            button.disabled = false;
+            button.textContent = 'Salvar';
+        }
+    }
+
+    async function removeRequirement(event, reqId, role) {
+        stopPropagation(event);
+        if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
+        try {
+            const { error } = await supabaseClient.functions.invoke('remove-vaga', { body: { requirement_id: reqId } });
+            if (error) throw error;
+            initializePage();
+        } catch (error) {
+            alert(`Erro ao remover vaga: ${error.message}`);
+        }
+    }
+
+    async function removeVolunteer(event, scheduleId, volunteerName) {
+        stopPropagation(event);
+        if (!confirm(`Tem certeza que deseja remover ${volunteerName} desta escala?`)) return;
+        try {
+            const { error } = await supabaseClient.functions.invoke('delete-schedule', { body: { schedule_id: scheduleId } });
+            if (error) throw error;
+            initializePage();
+        } catch (error) {
+            alert(`Erro ao remover voluntário: ${error.message}`);
         }
     }
 
@@ -403,46 +362,54 @@
         }
     }
 
-    function formatTime(dateString) {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    async function selectVolunteer(memberId) {
+        try {
+            const { error } = await supabaseClient.functions.invoke('create-schedule', {
+                body: { requirement_id: currentRequirementId, member_id: memberId }
+            });
+            if (error) throw error;
+            closeModal();
+            initializePage();
+        } catch (error) {
+            alert(`Erro ao escalar voluntário: ${error.message}`);
+        }
     }
 
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const correctedDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
-        return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
-    }
-
-    // --- INICIALIZAÇÃO DA PÁGINA ---
     async function initializePage() {
-        loadingOverlay.style.display = 'flex';
-        document.getElementById('main-content').style.display = 'none';
+        const loadingContainer = document.getElementById('loading-container');
+        const mainContent = document.getElementById('main-content');
+        
+        if(mainContent) mainContent.style.display = 'none';
+        if(loadingContainer) loadingContainer.style.display = 'block';
 
         try {
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { window.location.href = '/login'; return; }
+            if (!session) {
+                window.location.href = '/login';
+                return;
+            }
             
             const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
             if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
 
             allEventsData = events || [];
-            applyFilters();
+            applyFilters(); // Aplica filtros (ou a falta deles) na carga inicial
             
+            // Adiciona listeners para os filtros
             document.getElementById('filter-name').addEventListener('input', () => applyFilters());
             document.getElementById('filter-start-date').addEventListener('change', () => applyFilters());
             document.getElementById('filter-end-date').addEventListener('change', () => applyFilters());
             
-            document.getElementById('main-content').style.display = 'block';
+            if(loadingContainer) loadingContainer.style.display = 'none';
+            if(mainContent) mainContent.style.display = 'block';
+
         } catch (error) {
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `<p style="color: red; padding: 2rem;">${error.message}</p>`;
-            mainContent.style.display = 'block';
-        } finally {
-            loadingOverlay.style.display = 'none';
+            console.error("Erro fatal na inicialização:", error);
+            if(loadingContainer) {
+                loadingContainer.innerHTML = `<p style="color: red;">Erro fatal: ${error.message}</p>`;
+            }
         }
     }
 
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
-
