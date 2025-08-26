@@ -16,22 +16,44 @@
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+
+        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO (ADICIONADO) --- */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(243, 244, 246, 0.8); /* Cor de fundo do body com transparência */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border: 7px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* --- FIM DOS ESTILOS DO SPINNER --- */
+
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
-        
-        /* Estilo para o grupo de botões */
         .button-group { display: flex; gap: 1rem; }
-
         .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
-        
         .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
         .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
         .widget-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
         .widget-chart { position: relative; height: 300px; width: 100%; }
         .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        
         .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 1rem 1.5rem; text-align: left; vertical-align: middle; white-space: nowrap; }
@@ -55,50 +77,26 @@
         .child-row { display: none; background-color: #f9fafb; }
         .child-row td { border: none !important; padding-left: 4rem; }
         .child-row .role-name { font-weight: 600; color: var(--primary-color); }
-
-        /* --- INÍCIO DAS MELHORIAS PARA MOBILE --- */
-        /* Esta regra se aplica a telas com largura máxima de 768px */
         @media (max-width: 768px) {
-            body {
-                padding: 1rem; /* Reduz o espaçamento do corpo da página */
-            }
-            .header {
-                flex-direction: column; /* Coloca o título e os botões em coluna */
-                align-items: flex-start; /* Alinha tudo à esquerda */
-                gap: 1rem; /* Adiciona um espaço entre o título e os botões */
-            }
-            h1 {
-                font-size: 1.75rem; /* Reduz um pouco o título principal */
-            }
-            .button-group {
-                flex-direction: column; /* Botões um embaixo do outro */
-                width: 100%; /* Ocupam toda a largura */
-                gap: 0.75rem; /* Espaço entre os botões */
-            }
-            .button {
-                width: 100%; /* Garante que o botão ocupe a largura do grupo */
-                box-sizing: border-box; /* Garante que o padding não quebre o layout */
-                text-align: center; /* Centraliza o texto no botão */
-            }
-            .widgets-grid {
-                /* Força os widgets a ficarem em duas colunas */
-                grid-template-columns: 1fr 1fr; 
-            }
-            .widget-value {
-                font-size: 2rem; /* Reduz o tamanho dos números grandes */
-            }
-            #kpi-next-event {
-                font-size: 1.5rem; /* Ajuste específico para a data do evento */
-            }
-            .charts-container {
-                grid-template-columns: 1fr; /* Força os gráficos a ficarem em uma coluna */
-            }
+            body { padding: 1rem; }
+            .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            h1 { font-size: 1.75rem; }
+            .button-group { flex-direction: column; width: 100%; gap: 0.75rem; }
+            .button { width: 100%; box-sizing: border-box; text-align: center; }
+            .widgets-grid { grid-template-columns: 1fr 1fr; }
+            .widget-value { font-size: 2rem; }
+            #kpi-next-event { font-size: 1.5rem; }
+            .charts-container { grid-template-columns: 1fr; }
         }
-        /* --- FIM DAS MELHORIAS PARA MOBILE --- */
     </style>
 </head>
 <body>
-    <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando Dashboard...</div>
+    <!-- OVERLAY DE CARREGAMENTO (ADICIONADO) -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- O antigo 'loading-container' foi removido, pois o overlay o substitui -->
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
             <h1 id="ministry-name-title">Dashboard do Líder</h1>
@@ -132,14 +130,15 @@
             </table>
         </div>
     </div>
-    <!-- O JavaScript vai no bloco abaixo -->
-<script>
+    
+  <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
     let aptitudeChart = null, monthlyLoadChart = null, currentMinistryId = null;
 
+    // Todas as suas funções de lógica e renderização permanecem intactas
     function groupVolunteers(flatList) {
         const grouped = {};
         flatList.forEach(item => {
@@ -179,7 +178,7 @@
                             <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
                             <div>
                                 <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
-                                <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
+                                <div style="color: var(--text-secondary  ); font-size: 0.85rem;">${v.display_name || ''}</div>
                             </div>
                         </div>
                     </td>
@@ -217,6 +216,12 @@
     }
 
     async function checkAuth() {
+        // --- MUDANÇAS AQUI ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainContent = document.getElementById('main-content');
+        loadingOverlay.style.display = 'flex'; // 1. Mostra o spinner
+        mainContent.style.display = 'none';
+
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) { window.location.href = '/login'; return; }
         try {
@@ -225,11 +230,16 @@
             const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
             if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
             currentMinistryId = ministryData.id;
-            document.getElementById('loading-container').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
+            
+            mainContent.style.display = 'block'; // Mostra o conteúdo principal antes de popular
             document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
-            fetchAndBuildDashboard(currentMinistryId);
-        } catch (error) { document.getElementById('loading-container').innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`; }
+            await fetchAndBuildDashboard(currentMinistryId); // Espera o dashboard ser construído
+        } catch (error) { 
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Erro: ${error.message}</p>`;
+            mainContent.style.display = 'block';
+        } finally {
+            loadingOverlay.style.display = 'none'; // 2. Esconde o spinner no final
+        }
     }
 
     async function fetchAndBuildDashboard(ministryId) {
@@ -243,7 +253,10 @@
             buildManagementTable(data.volunteers);
             buildAptitudeChart(data.charts.aptitudeDistribution);
             buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
-        } catch (error) { document.getElementById('main-content').innerHTML = `<p style="color: red;">Falha ao carregar dados: ${error.message}</p>`; }
+        } catch (error) { 
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
+        }
     }
 
     function buildAptitudeChart(distributionData) {
@@ -267,12 +280,21 @@
     async function updateLeaderScore(memberMinistryId, newScoreString) {
         const newScore = parseFloat(newScoreString);
         if (isNaN(newScore) || newScore < 0 || newScore > 10) { showToast('Nota inválida.', 'error'); return; }
+        
+        // Mostra o spinner durante a atualização
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'flex';
+
         try {
             const { data, error } = await supabaseClient.functions.invoke('update-leader-score', { body: { memberMinistryId, newScore } });
             if (error) throw error;
             showToast(data.message || 'Nota atualizada!', 'success');
-            fetchAndBuildDashboard(currentMinistryId);
-        } catch (error) { showToast(`Erro: ${error.context?.json?.error || error.message}`, 'error'); }
+            await fetchAndBuildDashboard(currentMinistryId); // Recarrega os dados
+        } catch (error) { 
+            showToast(`Erro: ${error.context?.json?.error || error.message}`, 'error'); 
+        } finally {
+            loadingOverlay.style.display = 'none'; // Esconde o spinner
+        }
     }
 
     function showToast(message, type = 'success') {
@@ -288,4 +310,3 @@
 </script>
 
 </body>
-</html>
