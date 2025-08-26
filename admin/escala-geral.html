@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <title>Escala Geral de Ministérios</title>
@@ -15,6 +13,33 @@
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ); --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        
+        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO (ADICIONADO) --- */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(243, 244, 246, 0.8); /* Cor de fundo do body com transparência */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border: 7px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* --- FIM DOS ESTILOS DO SPINNER --- */
+
         .container { max-width: 1600px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
         h1 { text-align: center; color: var(--primary-color); font-weight: 700; font-size: 2.25rem; margin-bottom: 2rem; }
@@ -49,152 +74,162 @@
         .tooltip { visibility: hidden; position: absolute; top: 50%; left: 105%; transform: translateY(-50%); background: #111827; color: white; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; white-space: nowrap; z-index: 100; opacity: 0; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.5rem; }
         .volunteer-name:hover .tooltip { visibility: visible; opacity: 1; }
         .tooltip-pic { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
-        #loading-indicator { text-align: center; padding: 4rem; font-size: 1.2rem; font-weight: 500; }
     </style>
 </head>
 <body>
+    <!-- OVERLAY DE CARREGAMENTO (ADICIONADO) -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>Escala Geral de Ministérios</h1>
             <a href="/admin" class="button">Voltar ao Dashboard</a>
         </div>
         <div id="filters-placeholder"></div>
-        <div id="table-placeholder" class="table-wrapper">
-            <div id="loading-indicator">Carregando escala...</div>
-        </div>
+        <!-- O antigo 'loading-indicator' foi removido do HTML, pois o JS irá controlá-lo -->
+        <div id="table-placeholder" class="table-wrapper"></div>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
-
-        let ministryChoiceInstance, volunteerChoiceInstance, weekdayChoiceInstance;
-        let ministriesList = [];
-
-        function formatTime(dateString) { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); }
-        function formatDate(dateString) { if (!dateString) return { formatted: '', weekday: '' }; const date = new Date(dateString); const day = date.getUTCDate().toString().padStart(2, '0'); const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']; const weekday = weekdays[date.getUTCDay()]; return { formatted: `${day}/${month} - ${weekday.toLowerCase()}`, weekday: weekday }; }
-        function highlightMember(el, memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => { if (item !== el) item.classList.add('highlight'); }); }
-        function removeHighlight(memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => item.classList.remove('highlight')); }
-        function filterByVolunteer(volunteerName) { volunteerChoiceInstance.setChoiceByValue(volunteerName); applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-        function clearFilter(filterName) { if (filterName === 'ministry') ministryChoiceInstance.setChoiceByValue('all'); else if (filterName === 'volunteer') volunteerChoiceInstance.setChoiceByValue('all'); else if (filterName === 'weekday') weekdayChoiceInstance.setChoiceByValue('all'); }
-
-        function applyFilters() {
-            const ministryFilter = ministryChoiceInstance.getValue(true);
-            const volunteerFilter = volunteerChoiceInstance.getValue(true);
-            const weekdayFilter = weekdayChoiceInstance.getValue(true);
-            document.querySelectorAll('#schedule-body tr').forEach(row => {
-                let showRow = true;
-                if (weekdayFilter && weekdayFilter !== 'all' && row.getAttribute('data-weekday') !== weekdayFilter) showRow = false;
-                if (volunteerFilter && volunteerFilter !== 'all' && !row.querySelector(`.volunteer-name[data-member-name="${volunteerFilter}"]`)) showRow = false;
-                if (ministryFilter && ministryFilter !== 'all') {
-                    const ministryCell = row.cells[ministriesList.indexOf(ministryFilter) + 1];
-                    if (!ministryCell || ministryCell.innerText.trim() === '') showRow = false;
-                }
-                row.style.display = showRow ? '' : 'none';
-            });
-        }
-
-        function renderTable(schedules) {
-            const eventosAgrupados = {};
-            schedules.forEach(s => {
-                const eventKey = s.parent_event_id || s.event_id;
-                if (!eventosAgrupados[eventKey]) { 
-                    // ** CORREÇÃO APLICADA AQUI **
-                    // Usa s.start_time que agora existe na VIEW
-                    eventosAgrupados[eventKey] = { id: eventKey, name: s.parent_event_name || s.event_name, date: new Date(s.start_time), turnos: {} }; 
-                }
-                if (!eventosAgrupados[eventKey].turnos[s.event_id]) { 
-                    eventosAgrupados[eventKey].turnos[s.event_id] = { id: s.event_id, name: s.event_name, startTime: s.start_time, endTime: s.end_time, ministries: {} }; 
-                }
-                if (!eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name]) { 
-                    eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name] = { volunteers: [] }; 
-                }
-                eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name].volunteers.push(s);
-            });
-            const sortedEvents = Object.values(eventosAgrupados).sort((a, b) => a.date - b.date);
-            
-            ministriesList = [...new Set(schedules.map(item => item.ministry_name))].sort();
-            const uniqueVolunteers = [...new Set(schedules.map(item => item.member_name))].sort();
-            const uniqueWeekdays = [...new Set(Object.values(sortedEvents).map(event => formatDate(event.date).weekday))];
-            const weekdayOrder = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-            uniqueWeekdays.sort((a, b) => weekdayOrder.indexOf(a) - weekdayOrder.indexOf(b));
-
-            document.getElementById('filters-placeholder').innerHTML = `
-                <div class="filters-container">
-                    <div class="filter-group"><label for="ministry-filter">Filtrar por Ministério</label><select id="ministry-filter"><option value="all">Todos</option>${ministriesList.map(m => `<option value="${m}">${m}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('ministry')">&times;</span></div>
-                    <div class="filter-group"><label for="volunteer-filter">Filtrar por Voluntário</label><select id="volunteer-filter"><option value="all">Todos</option>${uniqueVolunteers.map(v => `<option value="${v}">${v}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('volunteer')">&times;</span></div>
-                    <div class="filter-group"><label for="weekday-filter">Filtrar por Dia</label><select id="weekday-filter"><option value="all">Todos</option>${uniqueWeekdays.map(day => `<option value="${day}">${day}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('weekday')">&times;</span></div>
-                </div>`;
-
-            let headerHTML = '<tr><th>Data</th>';
-            ministriesList.forEach(m => { headerHTML += `<th>${m}</th>`; });
-            headerHTML += '</tr>';
-
-            let rowsHTML = '';
-            sortedEvents.forEach((event) => {
-                const dateInfo = formatDate(event.date);
-                rowsHTML += `<tr data-weekday="${dateInfo.weekday}">`;
-                rowsHTML += `<td class="date-cell">${event.name}<small>${dateInfo.formatted}</small></td>`;
-                ministriesList.forEach(ministryName => {
-                    rowsHTML += '<td>';
-                    const turnosOrdenados = Object.values(event.turnos).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-                    turnosOrdenados.forEach(turno => {
-                        const ministryData = turno.ministries[ministryName];
-                        if (ministryData && ministryData.volunteers.length > 0) {
-                            rowsHTML += `<div class="turn-wrapper">`;
-                            if (turnosOrdenados.length > 1) { rowsHTML += `<h4 class="turn-title">${turno.name} (${formatTime(turno.startTime)} - ${formatTime(turno.endTime)})</h4>`; }
-                            rowsHTML += '<ul class="volunteer-list">';
-                            const groupedByRole = ministryData.volunteers.reduce((acc, v) => { (acc[v.role] = acc[v.role] || []).push(v); return acc; }, {});
-                            for (const role in groupedByRole) {
-                                rowsHTML += '<li class="volunteer-item">';
-                                if (role && role !== 'null' && role.toLowerCase().trim() !== ministryName.toLowerCase().trim()) { rowsHTML += `<span class="role-prefix">${role}</span>`; }
-                                const volunteerNamesHTML = groupedByRole[role].map(v => `
-                                    <span class="volunteer-name" data-member-id="${v.member_id}" data-member-name="${v.member_name}" onmouseover="highlightMember(this, '${v.member_id}')" onmouseout="removeHighlight('${v.member_id}')" ondblclick="filterByVolunteer('${v.member_name}')">
-                                        ${v.member_display_name || v.member_name}
-                                        <span class="tooltip">${v.member_photo_url ? `<img src="${v.member_photo_url}" alt="${v.member_name}" class="tooltip-pic">` : ''}<span>${v.member_name}</span></span>
-                                    </span>`).join(' ');
-                                rowsHTML += `<div class="volunteer-names-wrapper">${volunteerNamesHTML}</div></li>`;
-                            }
-                            rowsHTML += '</ul></div>';
-                        }
-                    });
-                    rowsHTML += '</td>';
-                });
-                rowsHTML += '</tr>';
-            });
-
-            document.getElementById('table-placeholder').innerHTML = `<table><thead>${headerHTML}</thead><tbody id="schedule-body">${rowsHTML}</tbody></table>`;
-
-            ministryChoiceInstance = new Choices('#ministry-filter', { searchEnabled: false, itemSelectText: '' });
-            volunteerChoiceInstance = new Choices('#volunteer-filter', { searchPlaceholderValue: 'Pesquisar...', itemSelectText: '' });
-            weekdayChoiceInstance = new Choices('#weekday-filter', { searchEnabled: false, itemSelectText: '' });
-            ministryChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
-            volunteerChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
-            weekdayChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
-        }
-
-        async function main() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { window.location.href = '/login'; return; }
-
-            try {
-                const { data, error } = await supabaseClient.functions.invoke('get-general-schedule');
-                if (error) throw error;
-
-                if (data && data.length > 0) {
-                    renderTable(data);
-                } else {
-                    document.getElementById('table-placeholder').innerHTML = '<div id="loading-indicator">Nenhuma escala encontrada.</div>';
-                }
-            } catch (error) {
-                console.error("Erro ao carregar a escala:", error);
-                document.getElementById('table-placeholder').innerHTML = `<div id="loading-indicator" style="color: red;">Falha ao carregar a escala: ${error.message}</div>`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', main);
+        // O JavaScript virá aqui
     </script>
 </body>
-</html>
+<script>
+    const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
+
+    let ministryChoiceInstance, volunteerChoiceInstance, weekdayChoiceInstance;
+    let ministriesList = [];
+
+    // Suas funções auxiliares permanecem exatamente as mesmas
+    function formatTime(dateString) { if (!dateString) return ''; const date = new Date(dateString); return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }); }
+    function formatDate(dateString) { if (!dateString) return { formatted: '', weekday: '' }; const date = new Date(dateString); const day = date.getUTCDate().toString().padStart(2, '0'); const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']; const weekday = weekdays[date.getUTCDay()]; return { formatted: `${day}/${month} - ${weekday.toLowerCase()}`, weekday: weekday }; }
+    function highlightMember(el, memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => { if (item !== el) item.classList.add('highlight'); }); }
+    function removeHighlight(memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => item.classList.remove('highlight')); }
+    function filterByVolunteer(volunteerName) { volunteerChoiceInstance.setChoiceByValue(volunteerName); applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function clearFilter(filterName) { if (filterName === 'ministry') ministryChoiceInstance.setChoiceByValue('all'); else if (filterName === 'volunteer') volunteerChoiceInstance.setChoiceByValue('all'); else if (filterName === 'weekday') weekdayChoiceInstance.setChoiceByValue('all'); }
+
+    function applyFilters() {
+        const ministryFilter = ministryChoiceInstance.getValue(true);
+        const volunteerFilter = volunteerChoiceInstance.getValue(true);
+        const weekdayFilter = weekdayChoiceInstance.getValue(true);
+        document.querySelectorAll('#schedule-body tr').forEach(row => {
+            let showRow = true;
+            if (weekdayFilter && weekdayFilter !== 'all' && row.getAttribute('data-weekday') !== weekdayFilter) showRow = false;
+            if (volunteerFilter && volunteerFilter !== 'all' && !row.querySelector(`.volunteer-name[data-member-name="${volunteerFilter}"]`)) showRow = false;
+            if (ministryFilter && ministryFilter !== 'all') {
+                const ministryCell = row.cells[ministriesList.indexOf(ministryFilter) + 1];
+                if (!ministryCell || ministryCell.innerText.trim() === '') showRow = false;
+            }
+            row.style.display = showRow ? '' : 'none';
+        });
+    }
+
+    function renderTable(schedules) {
+        const eventosAgrupados = {};
+        schedules.forEach(s => {
+            const eventKey = s.parent_event_id || s.event_id;
+            if (!eventosAgrupados[eventKey]) { 
+                eventosAgrupados[eventKey] = { id: eventKey, name: s.parent_event_name || s.event_name, date: new Date(s.start_time), turnos: {} }; 
+            }
+            if (!eventosAgrupados[eventKey].turnos[s.event_id]) { 
+                eventosAgrupados[eventKey].turnos[s.event_id] = { id: s.event_id, name: s.event_name, startTime: s.start_time, endTime: s.end_time, ministries: {} }; 
+            }
+            if (!eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name]) { 
+                eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name] = { volunteers: [] }; 
+            }
+            eventosAgrupados[eventKey].turnos[s.event_id].ministries[s.ministry_name].volunteers.push(s);
+        });
+        const sortedEvents = Object.values(eventosAgrupados).sort((a, b) => a.date - b.date);
+        
+        ministriesList = [...new Set(schedules.map(item => item.ministry_name))].sort();
+        const uniqueVolunteers = [...new Set(schedules.map(item => item.member_name))].sort();
+        const uniqueWeekdays = [...new Set(Object.values(sortedEvents).map(event => formatDate(event.date).weekday))];
+        const weekdayOrder = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        uniqueWeekdays.sort((a, b) => weekdayOrder.indexOf(a) - weekdayOrder.indexOf(b));
+
+        document.getElementById('filters-placeholder').innerHTML = `
+            <div class="filters-container">
+                <div class="filter-group"><label for="ministry-filter">Filtrar por Ministério</label><select id="ministry-filter"><option value="all">Todos</option>${ministriesList.map(m => `<option value="${m}">${m}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('ministry')">&times;</span></div>
+                <div class="filter-group"><label for="volunteer-filter">Filtrar por Voluntário</label><select id="volunteer-filter"><option value="all">Todos</option>${uniqueVolunteers.map(v => `<option value="${v}">${v}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('volunteer')">&times;</span></div>
+                <div class="filter-group"><label for="weekday-filter">Filtrar por Dia</label><select id="weekday-filter"><option value="all">Todos</option>${uniqueWeekdays.map(day => `<option value="${day}">${day}</option>`).join('')}</select><span class="clear-filter" onclick="clearFilter('weekday')">&times;</span></div>
+            </div>`;
+
+        let headerHTML = '<tr><th>Data</th>';
+        ministriesList.forEach(m => { headerHTML += `<th>${m}</th>`; });
+        headerHTML += '</tr>';
+
+        let rowsHTML = '';
+        sortedEvents.forEach((event) => {
+            const dateInfo = formatDate(event.date);
+            rowsHTML += `<tr data-weekday="${dateInfo.weekday}">`;
+            rowsHTML += `<td class="date-cell">${event.name}<small>${dateInfo.formatted}</small></td>`;
+            ministriesList.forEach(ministryName => {
+                rowsHTML += '<td>';
+                const turnosOrdenados = Object.values(event.turnos).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                turnosOrdenados.forEach(turno => {
+                    const ministryData = turno.ministries[ministryName];
+                    if (ministryData && ministryData.volunteers.length > 0) {
+                        rowsHTML += `<div class="turn-wrapper">`;
+                        if (turnosOrdenados.length > 1) { rowsHTML += `<h4 class="turn-title">${turno.name} (${formatTime(turno.startTime)} - ${formatTime(turno.endTime)})</h4>`; }
+                        rowsHTML += '<ul class="volunteer-list">';
+                        const groupedByRole = ministryData.volunteers.reduce((acc, v) => { (acc[v.role] = acc[v.role] || []).push(v); return acc; }, {});
+                        for (const role in groupedByRole) {
+                            rowsHTML += '<li class="volunteer-item">';
+                            if (role && role !== 'null' && role.toLowerCase().trim() !== ministryName.toLowerCase().trim()) { rowsHTML += `<span class="role-prefix">${role}</span>`; }
+                            const volunteerNamesHTML = groupedByRole[role].map(v => `
+                                <span class="volunteer-name" data-member-id="${v.member_id}" data-member-name="${v.member_name}" onmouseover="highlightMember(this, '${v.member_id}')" onmouseout="removeHighlight('${v.member_id}')" ondblclick="filterByVolunteer('${v.member_name}')">
+                                    ${v.member_display_name || v.member_name}
+                                    <span class="tooltip">${v.member_photo_url ? `<img src="${v.member_photo_url}" alt="${v.member_name}" class="tooltip-pic">` : ''}<span>${v.member_name}</span></span>
+                                </span>`).join(' ');
+                            rowsHTML += `<div class="volunteer-names-wrapper">${volunteerNamesHTML}</div></li>`;
+                        }
+                        rowsHTML += '</ul></div>';
+                    }
+                });
+                rowsHTML += '</td>';
+            });
+            rowsHTML += '</tr>';
+        });
+
+        document.getElementById('table-placeholder').innerHTML = `<table><thead>${headerHTML}</thead><tbody id="schedule-body">${rowsHTML}</tbody></table>`;
+
+        ministryChoiceInstance = new Choices('#ministry-filter', { searchEnabled: false, itemSelectText: '' });
+        volunteerChoiceInstance = new Choices('#volunteer-filter', { searchPlaceholderValue: 'Pesquisar...', itemSelectText: '' });
+        weekdayChoiceInstance = new Choices('#weekday-filter', { searchEnabled: false, itemSelectText: '' });
+        ministryChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
+        volunteerChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
+        weekdayChoiceInstance.passedElement.element.addEventListener('change', applyFilters);
+    }
+
+    async function main() {
+        // --- MUDANÇAS AQUI ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'flex'; // 1. Mostra o spinner no início
+
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { window.location.href = '/login'; return; }
+
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('get-general-schedule');
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                renderTable(data);
+            } else {
+                document.getElementById('table-placeholder').innerHTML = '<div style="text-align: center; padding: 4rem;">Nenhuma escala encontrada.</div>';
+            }
+        } catch (error) {
+            console.error("Erro ao carregar a escala:", error);
+            document.getElementById('table-placeholder').innerHTML = `<div style="text-align: center; padding: 4rem; color: red;">Falha ao carregar a escala: ${error.message}</div>`;
+        } finally {
+            loadingOverlay.style.display = 'none'; // 2. Esconde o spinner no final (com sucesso ou erro)
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', main);
+</script>
