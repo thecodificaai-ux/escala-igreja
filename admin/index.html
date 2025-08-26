@@ -3,331 +3,458 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Escalas</title>
+    <title>Dashboard do Líder</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
-            --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --warning-color: #f59e0b; /* Adicionando cor de aviso */
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --background: #ffffff; --success-color: #10b981; --error-color: #ef4444;
+            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 );
             --radius: 12px;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* CSS do Cabeçalho ATUALIZADO */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 1.5rem; 
-            flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
-            gap: 1rem; /* Espaçamento entre o título e os botões */
-        }
-        .header-actions {
-            display: flex;
-            gap: 0.75rem; /* Espaçamento entre os botões */
-            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
-        }
 
-        h1 { font-weight: 700; font-size: 2.25rem; }
-        .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
-        .button:hover { background-color: var(--primary-dark); }
-        .button.secondary { background-color: var(--text-secondary); }
-        .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; }
-        .event-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
-        .event-title { font-size: 1.5rem; font-weight: 600; margin: 0; }
-        .event-date { font-size: 1rem; font-weight: 500; color: var(--primary-color); margin-top: 0.25rem; }
-        .event-body { padding: 0 1.5rem 1.5rem 1.5rem; }
-        .turn-wrapper { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
-        .turn-wrapper:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-        .turn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .turn-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin: 0; }
-        .button-add-req { background-color: var(--success-color); color: white; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .button-add-req:hover { background-color: #059669; }
-        .requirements-list { list-style: none; padding: 0; margin: 0; }
-        .requirement-item { padding: 1rem 0; border-bottom: 1px solid var(--secondary-color); }
-        .requirement-item:last-child { border-bottom: none; }
-        .requirement-header { display: flex; justify-content: space-between; align-items: center; }
-        .requirement-role-group { display: flex; align-items: center; gap: 0.75rem; }
-        .requirement-role { font-size: 1.1rem; font-weight: 600; }
-        .gender-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 12px; background-color: var(--secondary-color); color: var(--text-secondary); font-weight: 500; }
-        .requirement-slots { font-size: 0.9rem; color: var(--text-secondary); }
-        .scaled-list { list-style: none; padding: 0.5rem 0 0 1rem; margin-top: 0.5rem; border-left: 2px solid var(--primary-color); }
-        .scaled-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
-        .scaled-info { display: flex; align-items: center; gap: 0.75rem; }
-        .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-        .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
-        .add-requirement-form { padding-top: 1rem; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-        .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO --- */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(243, 244, 246, 0.8); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .spinner {
+            width: 56px; height: 56px; border: 7px solid var(--border-color);
+            border-top-color: var(--primary-color); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
+        .button-group { display: flex; gap: 1rem; }
+        .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
+        .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .widget-value { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 0; }
+        .widget-chart { position: relative; height: 300px; width: 100%; }
+        .charts-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .table-wrapper { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem 1.5rem; text-align: left; vertical-align: middle; white-space: nowrap; }
+        th { border-bottom: 2px solid var(--border-color); }
+        
+        /* --- ESTILOS PARA TABELA ORDENÁVEL --- */
+        .sortable-header {
+            cursor: pointer; position: relative; user-select: none; 
+            background-color: var(--primary-color); color: white;
+        }
+        .sortable-header:hover { background-color: var(--primary-dark); }
+        .sortable-header::after {
+            content: ''; position: absolute; right: 1rem; top: 50%;
+            transform: translateY(-50%); border: 4px solid transparent; opacity: 0.5;
+        }
+        .sortable-header.sort-asc::after { border-bottom-color: white; opacity: 1; }
+        .sortable-header.sort-desc::after { border-top-color: white; opacity: 1; }
+
+        .volunteer-info { display: flex; align-items: center; gap: 1rem; }
+        .volunteer-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .aptitude-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
+        .aptitude-badge.especialista { background-color: #dcfce7; color: #166534; }
+        .aptitude-badge.confiável { background-color: #e0e7ff; color: #3730a3; }
+        .aptitude-badge.em-desenvolvimento { background-color: #fef3c7; color: #92400e; }
+        .aptitude-badge.em-treinamento { background-color: #fee2e2; color: #991b1b; }
+        .warning-icon { color: var(--warning-color); font-weight: bold; font-size: 1.2rem; cursor: help; }
+        .feedback-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 600; box-shadow: var(--shadow-md); transition: bottom 0.5s ease-in-out; z-index: 1000; }
+        .feedback-toast.show { bottom: 20px; }
+        .feedback-toast.success { background-color: var(--success-color); }
+        .feedback-toast.error { background-color: var(--error-color); }
+        .parent-row { cursor: pointer; border-top: 1px solid var(--border-color); }
+        .parent-row:hover { background-color: #f9fafb; }
+        
+        /* --- ESTILOS DO MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); display: none;
+            justify-content: center; align-items: center; z-index: 3000;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: var(--background); border-radius: var(--radius);
+            width: 90%; max-width: 600px; box-shadow: var(--shadow-md);
+            animation: slide-down 0.3s ease-out;
+        }
+        @keyframes slide-down {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+        }
         .modal-title { margin: 0; font-size: 1.5rem; }
-        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-        .volunteer-list { max-height: 40vh; overflow-y: auto; list-style: none; padding: 0; margin: 0 -1rem; }
-        .volunteer-list-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border-color); }
-        .volunteer-list-item:hover { background-color: var(--secondary-color); }
+        .modal-close {
+            background: none; border: none; font-size: 2rem; cursor: pointer;
+            color: var(--text-secondary); line-height: 1;
+        }
+        .modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
+        .modal-profile-header {
+            display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .modal-profile-pic {
+            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--primary-color);
+        }
+        .modal-profile-name { font-size: 1.75rem; font-weight: 700; margin: 0; }
+        .modal-profile-displayname { font-size: 1rem; color: var(--text-secondary); }
+        .modal-section-title {
+            font-size: 1rem; font-weight: 600; color: var(--primary-color);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-top: 2rem; margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;
+        }
+        .role-name { font-weight: 600; color: var(--primary-color); }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            h1 { font-size: 1.75rem; }
+            .button-group { flex-direction: column; width: 100%; gap: 0.75rem; }
+            .button { width: 100%; box-sizing: border-box; text-align: center; }
+            .widgets-grid { grid-template-columns: 1fr 1fr; }
+            .widget-value { font-size: 2rem; }
+            #kpi-next-event { font-size: 1.5rem; }
+            .charts-container { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
     <div id="main-content" class="container" style="display: none;">
-        
-        <!-- ================================================== -->
-        <!--  CABEÇALHO ATUALIZADO COM OS NOVOS BOTÕES -->
-        <!-- ================================================== -->
         <div class="header">
-            <h1>Gerenciar Escalas</h1>
-            <div class="header-actions">
-                <a href="/admin/escala-geral.html" class="button secondary">Ver Escala Geral</a>
-                <a href="/admin/indisponibilidades.html" class="button" style="background-color: var(--warning-color);">Indisponibilidades</a>
-                <a href="/admin" class="button">Voltar ao Dashboard</a>
+            <h1 id="ministry-name-title">Dashboard do Líder</h1>
+            <div class="button-group">
+                <a href="/admin/gerenciar-escala.html" class="button" style="background-color: #10b981;">Gerenciar Escalas</a>
+                <a href="/admin/escala-geral.html" class="button">Ver Escala Geral</a>
             </div>
         </div>
-
-        <div id="events-container" class="events-container"></div>
+        <div class="widgets-grid">
+            <div class="widget"><h2 class="widget-title">Voluntários Ativos</h2><p class="widget-value" id="kpi-total-volunteers">--</p></div>
+            <div class="widget"><h2 class="widget-title">Média de Aptidão</h2><p class="widget-value" id="kpi-average-score">--</p></div>
+            <div class="widget"><h2 class="widget-title">Indisponíveis (30d)</h2><p class="widget-value" id="kpi-unavailable-count">--</p></div>
+            <div class="widget"><h2 class="widget-title">Próximo Evento</h2><p class="widget-value" id="kpi-next-event" style="font-size: 1.8rem;">--</p></div>
+        </div>
+        <div class="charts-container">
+            <div class="widget"><h2 class="widget-title">Níveis de Aptidão do Time</h2><div class="widget-chart"><canvas id="aptitude-chart"></canvas></div></div>
+            <div class="widget"><h2 class="widget-title">Carga de Trabalho (Mês Atual)</h2><div class="widget-chart"><canvas id="monthly-load-chart"></canvas></div></div>
+        </div>
+        <div class="table-wrapper">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem;">
+                <h2 class="widget-title" style="padding: 1.5rem 0;">Gerenciamento de Voluntários</h2>
+                <div class="search-container">
+                    <input type="text" id="volunteer-search" placeholder="Buscar voluntário..." 
+                           style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); width: 250px;">
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="sortable-header" onclick="sortTable('full_name')">Voluntário</th>
+                        <th class="sortable-header" onclick="sortTable('total_roles')">Funções</th>
+                        <th class="sortable-header" onclick="sortTable('total_schedules_month')">Escalado (Mês)</th>
+                        <th class="sortable-header" onclick="sortTable('average_score')">Nota Média</th>
+                    </tr>
+                </thead>
+                <tbody id="management-body"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div id="add-volunteer-modal" class="modal-overlay">
-        <div class="modal-content">
+    <div id="volunteer-modal" class="modal-overlay" onclick="closeVolunteerModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 id="modal-title" class="modal-title">Adicionar Voluntário</h2>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <h2 id="modal-title" class="modal-title">Perfil do Voluntário</h2>
+                <button class="modal-close" onclick="closeVolunteerModal()">&times;</button>
             </div>
-            <div id="modal-body">
-                <p>Buscando voluntários disponíveis...</p>
-                <ul id="modal-volunteer-list" class="volunteer-list"></ul>
+            <div id="modal-body" class="modal-body">
+                <!-- O conteúdo do perfil será inserido aqui pelo JavaScript -->
             </div>
         </div>
     </div>
-<script>
-    const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
     
-    const ministryRoles = ["Projeção", "Transmissão", "Edição", "Foto", "Stories", "Câmera"];
-    const genderEnums = ["Ambos", "Masculino", "Feminino"];
+  <script>
+    const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+    
+    let aptitudeChart = null, monthlyLoadChart = null, currentMinistryId = null;
+    let allVolunteersData = [];
+    let currentSort = { column: 'full_name', direction: 'asc' };
 
-    let currentRequirementId = null;
-    const modal = document.getElementById('add-volunteer-modal');
-    const modalList = document.getElementById('modal-volunteer-list');
-
-    function formatTime(dateString) {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-    }
-
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const correctedDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
-        return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
-    }
-
-    function renderEvents(events) {
-        const container = document.getElementById('events-container');
-        if (!Array.isArray(events) || events.length === 0) {
-            container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
-            return;
-        }
-
-        const finalHTML = events.map(event => {
-            const turnos = (event && Array.isArray(event.turnos)) ? event.turnos : [];
-            const turnosHTML = turnos.map(turno => {
-                const requirements = (turno && Array.isArray(turno.requirements)) ? turno.requirements : [];
-                const requirementsHTML = requirements.map(req => {
-                    const schedules = (req && Array.isArray(req.schedules)) ? req.schedules : [];
-                    const scaledCount = schedules.length;
-                    const neededCount = req.quantity_needed || 0;
-                    const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
-                    const isFull = scaledCount >= neededCount;
-
-                    const scaledVolunteersHTML = schedules.map(schedule => {
-                        const member = schedule.member || {};
-                        return `
-                            <li class="scaled-item">
-                                <div class="scaled-info">
-                                    <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'N/A'}" class="scaled-pic">
-                                    <span>${member.full_name || 'N/A'}</span>
-                                </div>
-                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}'  )" title="Remover">&times;</button>
-                            </li>`;
-                    }).join('');
-
-                    return `
-                        <li class="requirement-item" data-req-id="${req.id}">
-                            <div class="requirement-header">
-                                <div class="requirement-role-group">
-                                    <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
-                                    <span class="requirement-role">${req.role || 'Função'}</span>
-                                    <span class="gender-badge">${req.gender || 'Ambos'}</span>
-                                </div>
-                                <span class="requirement-slots">${slotsText}</span>
-                            </div>
-                            ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
-                            <div style="text-align: right; margin-top: 0.5rem;">
-                                <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar</button>
-                            </div>
-                        </li>`;
-                }).join('');
-
-                const showTurnoTitle = turnos.length > 1 || (event && event.name) !== (turno && turno.name);
-                const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
-                
-                const roleOptions = ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('');
-                const genderOptions = genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('');
-
-                return `
-                    <div class="turn-wrapper">
-                        <div class="turn-header">
-                            ${turnoTitleHTML}
-                            <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
-                        </div>
-                        <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida.</li>'}</ul>
-                        <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
-                            <select id="role-select-${turno.id}">${roleOptions}</select>
-                            <select id="gender-select-${turno.id}">${genderOptions}</select>
-                            <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
-                            <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
-                        </div>
-                    </div>`;
-            }).join('');
-
-            return `
-                <div class="event-card" data-event-id="${event.id}">
-                    <div class="event-header">
-                        <div>
-                            <h2 class="event-title">${event.name || 'Evento'}</h2>
-                            <p class="event-date">${formatDate(event.date)}</p>
-                        </div>
-                    </div>
-                    <div class="event-body">${turnosHTML}</div>
-                </div>`;
-        }).join('');
-        container.innerHTML = finalHTML;
-    }
-
-    function toggleAddRequirementForm(turnId) {
-        const form = document.getElementById(`form-${turnId}`);
-        if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
-    }
-    async function saveRequirement(clickEvent, turnId) {
-        const role = document.getElementById(`role-select-${turnId}`).value;
-        const gender = document.getElementById(`gender-select-${turnId}`).value;
-        const quantity = document.getElementById(`quantity-input-${turnId}`).value;
-        if (!role || !gender || !quantity || quantity < 1) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-        const button = clickEvent.target;
-        button.disabled = true;
-        button.textContent = 'Salvando...';
-        try {
-            const { error } = await supabaseClient.functions.invoke('create-schedule-requirement', {
-                body: { event_id: turnId, role, gender, quantity_needed: parseInt(quantity) }
-            });
-            if (error) throw error;
-            initializePage();
-        } catch (error) {
-            alert(`Erro ao salvar vaga: ${error.message}`);
-            button.disabled = false;
-            button.textContent = 'Salvar';
-        }
-    }
-    async function removeRequirement(reqId, role) {
-        if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
-        try {
-            const { error } = await supabaseClient.functions.invoke('remove-vaga', { body: { requirement_id: reqId } });
-            if (error) throw error;
-            initializePage();
-        } catch (error) {
-            alert(`Erro ao remover vaga: ${error.message}`);
-        }
-    }
-    async function removeVolunteer(scheduleId, volunteerName) {
-        if (!confirm(`Tem certeza que deseja remover ${volunteerName} desta escala?`)) return;
-        try {
-            const { error } = await supabaseClient.functions.invoke('delete-schedule', { body: { schedule_id: scheduleId } });
-            if (error) throw error;
-            initializePage();
-        } catch (error) {
-            alert(`Erro ao remover voluntário: ${error.message}`);
-        }
-    }
-    function closeModal() {
-        if(modal) modal.style.display = 'none';
-    }
-    async function openModal(reqId, eventId, role, gender) {
-        currentRequirementId = reqId;
-        document.getElementById('modal-title').textContent = `Adicionar para: ${role}`;
-        modalList.innerHTML = '<li>Buscando voluntários...</li>';
-        if(modal) modal.style.display = 'flex';
-        try {
-             const { data, error } = await supabaseClient.functions.invoke('get-available-volunteers', {
-            body: { event_id: eventId, gender: gender, role: role }
-            });
-            if (error) throw error;
-            if (data.length === 0) {
-                modalList.innerHTML = '<li>Nenhum voluntário disponível encontrado.</li>';
-                return;
+    function groupVolunteers(flatList) {
+        const grouped = {};
+        flatList.forEach(item => {
+            if (!grouped[item.member_id]) {
+                grouped[item.member_id] = {
+                    member_id: item.member_id, full_name: item.full_name, display_name: item.display_name,
+                    photo_url: item.photo_url, is_unavailable_next_30_days: item.is_unavailable_next_30_days, roles: []
+                };
             }
-            modalList.innerHTML = data.map(v => `
-                <li class="volunteer-list-item" onclick="selectVolunteer('${v.id}')">
-                    <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="scaled-pic">
-                    <div><strong>${v.full_name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary  );">Nota: ${v.leader_score.toFixed(1)}</div></div>
-                </li>`).join('');
-        } catch (error) {
-            modalList.innerHTML = `<li>Erro ao buscar: ${error.message}</li>`;
-        }
-    }
-    async function selectVolunteer(memberId) {
-        try {
-            const { error } = await supabaseClient.functions.invoke('create-schedule', {
-                body: { requirement_id: currentRequirementId, member_id: memberId }
+            grouped[item.member_id].roles.push({
+                member_ministry_id: item.member_ministry_id, role: item.role, leader_score: item.leader_score,
+                aptitude_level: item.aptitude_level, schedule_count_current_month: item.schedule_count_current_month
             });
-            if (error) throw error;
-            closeModal();
-            initializePage();
-        } catch (error) {
-            alert(`Erro ao escalar voluntário: ${error.message}`);
+        });
+        Object.values(grouped).forEach(volunteer => {
+            volunteer.total_roles = volunteer.roles.length;
+            volunteer.total_schedules_month = volunteer.roles.reduce((sum, role) => sum + role.schedule_count_current_month, 0);
+            const totalScore = volunteer.roles.reduce((sum, role) => sum + parseFloat(role.leader_score), 0);
+            volunteer.average_score = volunteer.total_roles > 0 ? (totalScore / volunteer.total_roles).toFixed(1) : '0.0';
+        });
+        return Object.values(grouped);
+    }
+
+    function buildManagementTable(volunteers) {
+        const managementBody = document.getElementById('management-body');
+        if (volunteers) {
+            allVolunteersData = groupVolunteers(volunteers);
+        }
+
+        const sortedVolunteers = [...allVolunteersData].sort((a, b) => {
+            const col = currentSort.column;
+            const dir = currentSort.direction === 'asc' ? 1 : -1;
+            if (col === 'full_name') {
+                return a.full_name.localeCompare(b.full_name) * dir;
+            } else {
+                return (Number(a[col]) - Number(b[col])) * dir;
+            }
+        });
+
+        if (sortedVolunteers.length === 0) {
+            managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
+            return;
+        }
+        let rowsHTML = '';
+        sortedVolunteers.forEach(v => {
+            rowsHTML += `
+                <tr class="parent-row" onclick="openVolunteerModal('${v.member_id}')">
+                    <td>
+                        <div class="volunteer-info">
+                            <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
+                            <div>
+                                <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
+                                <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align: center; font-weight: 600;">${v.total_roles}</td>
+                    <td style="text-align: center; font-weight: 600;">${v.total_schedules_month}</td>
+                    <td>
+                        <input type="number" style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" value="${v.average_score}" readonly>
+                    </td>
+                </tr>
+            `;
+        });
+        managementBody.innerHTML = rowsHTML;
+
+        document.querySelectorAll('.sortable-header').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+        });
+        const activeHeader = document.querySelector(`.sortable-header[onclick="sortTable('${currentSort.column}')"]`);
+        if (activeHeader) {
+            activeHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
         }
     }
 
-    async function initializePage() {
-        const loadingContainer = document.getElementById('loading-container');
+    function sortTable(columnName) {
+        if (currentSort.column === columnName) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = columnName;
+            currentSort.direction = 'asc';
+        }
+        buildManagementTable(null);
+    }
+
+    function filterTableByName() {
+        const searchTerm = document.getElementById('volunteer-search').value.toLowerCase();
+        const rows = document.querySelectorAll('#management-body tr.parent-row');
+        rows.forEach(row => {
+            const volunteerName = row.cells[0].textContent.toLowerCase();
+            if (volunteerName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function openVolunteerModal(memberId) {
+        const volunteer = allVolunteersData.find(v => v.member_id === memberId);
+        if (!volunteer) return;
+
+        const modal = document.getElementById('volunteer-modal');
+        const modalBody = document.getElementById('modal-body');
+
+        let rolesHTML = '';
+        volunteer.roles.forEach(role => {
+            const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
+            rolesHTML += `
+                <tr>
+                    <td class="role-name">${role.role}</td>
+                    <td><span class="aptitude-badge ${levelClass}">${role.aptitude_level || 'N/A'}</span></td>
+                    <td style="text-align: center;">${role.schedule_count_current_month}</td>
+                    <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}" onchange="updateLeaderScore('${role.member_ministry_id}', this.value)"></td>
+                </tr>
+            `;
+        });
+
+        modalBody.innerHTML = `
+            <div class="modal-profile-header">
+                <img src="${volunteer.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${volunteer.full_name}" class="modal-profile-pic">
+                <div>
+                    <h3 class="modal-profile-name">${volunteer.full_name}</h3>
+                    <p class="modal-profile-displayname">${volunteer.display_name || ''}</p>
+                </div>
+            </div>
+            <h4 class="modal-section-title">Funções e Avaliações</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Função</th><th>Nível</th><th>Escalado (Mês )</th><th>Nota</th></tr>
+                    </thead>
+                    <tbody>${rolesHTML}</tbody>
+                </table>
+            </div>
+        `;
+        modal.style.display = 'flex';
+    }
+
+    function closeVolunteerModal() {
+        const modal = document.getElementById('volunteer-modal');
+        modal.style.display = 'none';
+    }
+
+    async function checkAuth() {
+        const loadingOverlay = document.getElementById('loading-overlay');
         const mainContent = document.getElementById('main-content');
-        
-        if(mainContent) mainContent.style.display = 'none';
-        if(loadingContainer) loadingContainer.style.display = 'block';
+        loadingOverlay.style.display = 'flex';
+        mainContent.style.display = 'none';
 
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { window.location.href = '/login'; return; }
         try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                window.location.href = '/login';
-                return;
-            }
+            const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
+            if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
+            const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
+            if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
+            currentMinistryId = ministryData.id;
             
-            const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
-
-            if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
-
-            renderEvents(events);
-            
-            if(loadingContainer) loadingContainer.style.display = 'none';
-            if(mainContent) mainContent.style.display = 'block';
-
-        } catch (error) {
-            console.error("Erro fatal na inicialização:", error);
-            if(loadingContainer) {
-                loadingContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
-            }
+            mainContent.style.display = 'block';
+            document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
+            await fetchAndBuildDashboard(currentMinistryId);
+        } catch (error) { 
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Erro: ${error.message}</p>`;
+            mainContent.style.display = 'block';
+        } finally {
+            loadingOverlay.style.display = 'none';
         }
     }
 
-    document.addEventListener('DOMContentLoaded', initializePage);
+    async function fetchAndBuildDashboard(ministryId) {
+        try {
+            const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
+            if (error) throw error;
+            document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
+            document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
+            document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
+            document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
+            buildManagementTable(data.volunteers);
+            buildAptitudeChart(data.charts.aptitudeDistribution);
+            buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
+            document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
+        } catch (error) { 
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
+        }
+    }
+
+    function buildAptitudeChart(distributionData) {
+        const ctx = document.getElementById('aptitude-chart').getContext('2d');
+        if (aptitudeChart) aptitudeChart.destroy();
+        aptitudeChart = new Chart(ctx, {
+            type: 'doughnut', data: { labels: Object.keys(distributionData), datasets: [{ label: 'Nº de Voluntários', data: Object.values(distributionData), backgroundColor: ['#16a34a', '#4f46e5', '#f59e0b', '#ef4444'], hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    function buildMonthlyLoadChart(distributionData) {
+        const ctx = document.getElementById('monthly-load-chart').getContext('2d');
+        if (monthlyLoadChart) monthlyLoadChart.destroy();
+        const logicalOrder = ['Nenhuma', '1-2 vezes', '3-4 vezes', '5+ vezes'];
+        const orderedLabels = [];
+        const orderedData = [];
+        logicalOrder.forEach(label => {
+            if (distributionData.hasOwnProperty(label)) {
+                orderedLabels.push(label);
+                orderedData.push(distributionData[label]);
+            }
+        });
+        monthlyLoadChart = new Chart(ctx, {
+            type: 'bar', 
+            data: { 
+                labels: orderedLabels, 
+                datasets: [{ 
+                    label: 'Nº de Voluntários', data: orderedData, 
+                    backgroundColor: ['#6b7280', '#a5b4fc', '#f59e0b', '#ef4444'], 
+                    borderColor: '#ffffff', borderWidth: 2, borderRadius: 5 
+                }] 
+            },
+            options: { 
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { ticks: { stepSize: 1 } }, y: { reverse: true } } 
+            }
+        });
+    }
+
+    async function updateLeaderScore(memberMinistryId, newScoreString) {
+        const newScore = parseFloat(newScoreString);
+        if (isNaN(newScore) || newScore < 0 || newScore > 10) { showToast('Nota inválida.', 'error'); return; }
+        
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'flex';
+
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('update-leader-score', { body: { memberMinistryId, newScore } });
+            if (error) throw error;
+            showToast(data.message || 'Nota atualizada!', 'success');
+            await fetchAndBuildDashboard(currentMinistryId);
+        } catch (error) { 
+            showToast(`Erro: ${error.context?.json?.error || error.message}`, 'error'); 
+        } finally {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `feedback-toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => document.body.removeChild(toast), 500); }, 4000);
+    }
+
+    document.addEventListener('DOMContentLoaded', checkAuth);
 </script>
+
+</body>
+</html>
