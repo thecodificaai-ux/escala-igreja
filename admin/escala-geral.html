@@ -111,7 +111,21 @@
     function highlightMember(el, memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => { if (item !== el) item.classList.add('highlight'); }); }
     function removeHighlight(memberId) { document.querySelectorAll(`.volunteer-name[data-member-id="${memberId}"]`).forEach(item => item.classList.remove('highlight')); }
     function filterByVolunteer(volunteerName) { volunteerChoiceInstance.setChoiceByValue(volunteerName); applyFilters(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    function clearFilter(filterName) { if (filterName === 'ministry') ministryChoiceInstance.setChoiceByValue('all'); else if (filterName === 'volunteer') volunteerChoiceInstance.setChoiceByValue('all'); else if (filterName === 'weekday') weekdayChoiceInstance.setChoiceByValue('all'); }
+  // SUBSTITUA A FUNÇÃO clearFilter PELA VERSÃO CORRIGIDA ABAIXO
+
+function clearFilter(filterName) {
+    // Limpa o valor do filtro selecionado
+    if (filterName === 'ministry') {
+        ministryChoiceInstance.setChoiceByValue('all');
+    } else if (filterName === 'volunteer') {
+        volunteerChoiceInstance.setChoiceByValue('all');
+    } else if (filterName === 'weekday') {
+        weekdayChoiceInstance.setChoiceByValue('all');
+    }
+
+    // CORREÇÃO: Chama a função de filtragem para atualizar a tabela
+    applyFilters();
+}
 
     function applyFilters() {
         const ministryFilter = ministryChoiceInstance.getValue(true);
