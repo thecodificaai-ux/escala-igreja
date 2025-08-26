@@ -268,14 +268,61 @@
         });
     }
 
-    function buildMonthlyLoadChart(distributionData) {
-        const ctx = document.getElementById('monthly-load-chart').getContext('2d');
-        if (monthlyLoadChart) monthlyLoadChart.destroy();
-        monthlyLoadChart = new Chart(ctx, {
-            type: 'bar', data: { labels: Object.keys(distributionData), datasets: [{ label: 'Nº de Voluntários', data: Object.values(distributionData), backgroundColor: ['#6b7280', '#a5b4fc', '#f59e0b', '#ef4444'], borderColor: '#ffffff', borderWidth: 2, borderRadius: 5 }] },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { stepSize: 1 } } } }
-        });
-    }
+// SUBSTITUA A FUNÇÃO buildMonthlyLoadChart PELA VERSÃO CORRIGIDA ABAIXO
+
+function buildMonthlyLoadChart(distributionData) {
+    const ctx = document.getElementById('monthly-load-chart').getContext('2d');
+    if (monthlyLoadChart) monthlyLoadChart.destroy();
+
+    // 1. Define a ordem lógica desejada para as barras
+    const logicalOrder = ['Nenhuma', '1-2 vezes', '3-4 vezes', '5+ vezes'];
+
+    // 2. Prepara os rótulos e os dados na ordem correta
+    const orderedLabels = [];
+    const orderedData = [];
+
+    logicalOrder.forEach(label => {
+        // Verifica se a categoria existe nos dados recebidos
+        if (distributionData.hasOwnProperty(label)) {
+            orderedLabels.push(label);
+            orderedData.push(distributionData[label]);
+        }
+    });
+
+    monthlyLoadChart = new Chart(ctx, {
+        type: 'bar', 
+        data: { 
+            // 3. Usa os dados ordenados para construir o gráfico
+            labels: orderedLabels, 
+            datasets: [{ 
+                label: 'Nº de Voluntários', 
+                data: orderedData, 
+                backgroundColor: ['#6b7280', '#a5b4fc', '#f59e0b', '#ef4444'], 
+                borderColor: '#ffffff', 
+                borderWidth: 2, 
+                borderRadius: 5 
+            }] 
+        },
+        options: { 
+            indexAxis: 'y', 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { display: false } 
+            }, 
+            scales: { 
+                x: { 
+                    ticks: { stepSize: 1 } 
+                },
+                // 4. Adiciona a opção para inverter a ordem do eixo Y
+                y: {
+                    reverse: true
+                }
+            } 
+        }
+    });
+}
+
 
     async function updateLeaderScore(memberMinistryId, newScoreString) {
         const newScore = parseFloat(newScoreString);
