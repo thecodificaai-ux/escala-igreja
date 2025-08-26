@@ -279,21 +279,27 @@
         }
     }
 
-    async function fetchAndBuildDashboard(ministryId) {
-        try {
-            const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
-            if (error) throw error;
-            document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
-            document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
-            document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
-            document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
-            buildManagementTable(data.volunteers);
-            buildAptitudeChart(data.charts.aptitudeDistribution);
-            buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
-        } catch (error) { 
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
-        }
+// 2. SUBSTITUA A FUNÇÃO fetchAndBuildDashboard PELA VERSÃO ABAIXO
+// (A única mudança é a adição da última linha)
+
+async function fetchAndBuildDashboard(ministryId) {
+    try {
+        const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
+        if (error) throw error;
+        document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
+        document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
+        document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
+        document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
+        buildManagementTable(data.volunteers);
+        buildAptitudeChart(data.charts.aptitudeDistribution);
+        buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
+
+        // LIGA O FILTRO DE BUSCA (NOVA LINHA)
+        document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
+
+    } catch (error) { 
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
     }
 
     function buildAptitudeChart(distributionData) {
@@ -353,6 +359,32 @@
             loadingOverlay.style.display = 'none';
         }
     }
+// 1. ADICIONE ESTA NOVA FUNÇÃO EM QUALQUER LUGAR DO SEU SCRIPT
+
+function filterTableByName() {
+    const searchTerm = document.getElementById('volunteer-search').value.toLowerCase();
+    const rows = document.querySelectorAll('#management-body tr.parent-row');
+    
+    rows.forEach(row => {
+        // Encontra o nome do voluntário na primeira célula (td)
+        const volunteerName = row.cells[0].textContent.toLowerCase();
+        
+        // Se o nome do voluntário incluir o termo de busca, mostra a linha. Senão, esconde.
+        if (volunteerName.includes(searchTerm)) {
+            row.style.display = ''; // 'table-row' pode causar problemas, '' reverte ao padrão do CSS
+        } else {
+            row.style.display = 'none';
+        }
+        
+        // Garante que as linhas filhas (detalhes) também sejam escondidas
+        const childRows = document.querySelectorAll(`.child-row[data-parent-id="${row.dataset.memberId}"]`);
+        if (childRows) {
+            childRows.forEach(child => child.style.display = 'none');
+        }
+        // Garante que a linha não fique com o estado "expandido" se for escondida
+        row.classList.remove('expanded');
+    });
+}
 
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
