@@ -17,7 +17,7 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 1rem; }
         @media (min-width: 768px) { body { padding: 2rem; } }
 
-        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO --- */
+        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO (ADICIONADO) --- */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -40,9 +40,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         /* --- FIM DOS ESTILOS DO SPINNER --- */
 
         .container { max-width: 1200px; margin: 0 auto; }
@@ -97,11 +95,12 @@
     </style>
 </head>
 <body>
-    <!-- NOVO OVERLAY DE CARREGAMENTO -->
+    <!-- OVERLAY DE CARREGAMENTO (ADICIONADO) -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="spinner"></div>
     </div>
 
+    <!-- O antigo 'loading-container' foi removido pois o overlay o substitui -->
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
             <h1>Gerenciar Escalas</h1>
@@ -111,7 +110,6 @@
                 <a href="/admin" class="button">Voltar ao Dashboard</a>
             </div>
         </div>
-
         <div class="filters-bar">
             <div class="filter-group">
                 <label for="filter-name">Buscar por Nome</label>
@@ -127,10 +125,8 @@
             </div>
             <button class="button" onclick="applyFilters(true)">Limpar</button>
         </div>
-
         <div id="events-container" class="events-container"></div>
     </div>
-
     <div id="add-volunteer-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -144,7 +140,6 @@
         </div>
     </div>
 </body>
-
 </html>
 <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
@@ -155,30 +150,39 @@
     const genderEnums = ["Ambos", "Masculino", "Feminino"];
 
     let allEventsData = [];
+    let currentRequirementId = null;
     const modal = document.getElementById('add-volunteer-modal');
     const modalList = document.getElementById('modal-volunteer-list');
     const loadingOverlay = document.getElementById('loading-overlay');
 
     // --- NOVA FUNÇÃO PARA RECARREGAMENTO ELEGANTE ---
     async function reloadData() {
-        const scrollY = window.scrollY; // 1. Salva a posição da rolagem
-        loadingOverlay.style.display = 'flex'; // 2. Mostra o spinner
+        const scrollY = window.scrollY;
+        loadingOverlay.style.display = 'flex';
+
+        // Preserva quais eventos estavam abertos
+        const openEventIds = [];
+        document.querySelectorAll('.event-body').forEach(body => {
+            if (body.style.display === 'block') {
+                openEventIds.push(body.closest('.event-card').dataset.eventId);
+            }
+        });
 
         try {
             const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
             if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
             
             allEventsData = events || [];
-            applyFilters(); // Aplica os filtros atuais aos novos dados
+            applyFilters(false, openEventIds); // Reaplica filtros e mantém eventos abertos
         } catch (error) {
             document.getElementById('events-container').innerHTML = `<p style="color: red;">${error.message}</p>`;
         } finally {
-            loadingOverlay.style.display = 'none'; // 4. Esconde o spinner
-            window.scrollTo(0, scrollY); // 5. Restaura a posição da rolagem
+            loadingOverlay.style.display = 'none';
+            window.scrollTo(0, scrollY);
         }
     }
 
-    // --- FUNÇÕES DE INTERAÇÃO (agora chamam reloadData) ---
+    // --- FUNÇÕES DE INTERAÇÃO (MODIFICADAS PARA USAR reloadData) ---
     async function saveRequirement(event, turnId) {
         stopPropagation(event);
         const role = document.getElementById(`role-select-${turnId}`).value;
@@ -196,7 +200,7 @@
                 body: { event_id: turnId, role, gender, quantity_needed: parseInt(quantity) }
             });
             if (error) throw error;
-            await reloadData(); // << MUDANÇA AQUI
+            await reloadData();
         } catch (error) {
             alert(`Erro ao salvar vaga: ${error.message}`);
             button.disabled = false;
@@ -208,9 +212,10 @@
         stopPropagation(event);
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
+            // CORREÇÃO: O nome da função estava errado no seu código.
             const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', { body: { requirement_id: reqId } });
             if (error) throw error;
-            await reloadData(); // << MUDANÇA AQUI
+            await reloadData();
         } catch (error) {
             alert(`Erro ao remover vaga: ${error.message}`);
         }
@@ -222,83 +227,27 @@
         try {
             const { error } = await supabaseClient.functions.invoke('delete-schedule', { body: { schedule_id: scheduleId } });
             if (error) throw error;
-            await reloadData(); // << MUDANÇA AQUI
+            await reloadData();
         } catch (error) {
             alert(`Erro ao remover voluntário: ${error.message}`);
         }
     }
 
-    async function selectVolunteer(event, memberId, requirementId) {
-        stopPropagation(event);
+    async function selectVolunteer(memberId) {
         try {
             const { error } = await supabaseClient.functions.invoke('create-schedule', {
-                body: { requirement_id: requirementId, member_id: memberId }
+                body: { requirement_id: currentRequirementId, member_id: memberId }
             });
             if (error) throw error;
             closeModal();
-            await reloadData(); // << MUDANÇA AQUI
+            await reloadData();
         } catch (error) {
             alert(`Erro ao escalar voluntário: ${error.message}`);
         }
     }
 
-    // --- FUNÇÃO DE INICIALIZAÇÃO (simplificada) ---
-    async function initializePage() {
-        loadingOverlay.style.display = 'flex';
-        document.getElementById('main-content').style.display = 'none';
-
-        try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                window.location.href = '/login';
-                return;
-            }
-            
-            const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
-            if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
-
-            allEventsData = events || [];
-            renderEvents(allEventsData);
-            
-            document.getElementById('filter-name').addEventListener('input', () => applyFilters());
-            document.getElementById('filter-start-date').addEventListener('change', () => applyFilters());
-            document.getElementById('filter-end-date').addEventListener('change', () => applyFilters());
-            
-            document.getElementById('main-content').style.display = 'block';
-        } catch (error) {
-            document.getElementById('main-content').innerHTML = `<p style="color: red; padding: 2rem;">${error.message}</p>`;
-            document.getElementById('main-content').style.display = 'block';
-        } finally {
-            loadingOverlay.style.display = 'none';
-        }
-    }
-
-    // --- O RESTANTE DO CÓDIGO (sem grandes alterações) ---
-    
-    function formatTime(dateString) {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-    }
-
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const correctedDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
-        return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
-    }
-
-    function toggleEventBody(eventId) {
-        const eventBody = document.querySelector(`.event-card[data-event-id="${eventId}"] .event-body`);
-        if (eventBody) {
-            const isOpening = eventBody.style.display === 'none';
-            if (isOpening) {
-                eventBody.style.display = 'block';
-            } else {
-                eventBody.style.display = 'none';
-            }
-        }
-    }
-
-    function applyFilters(clear = false) {
+    // --- LÓGICA DE RENDERIZAÇÃO E FILTROS (PRESERVADA E AJUSTADA) ---
+    function applyFilters(clear = false, openEventIds = []) {
         const nameFilter = clear ? '' : document.getElementById('filter-name').value.toLowerCase();
         const startDateFilter = clear ? '' : document.getElementById('filter-start-date').value;
         const endDateFilter = clear ? '' : document.getElementById('filter-end-date').value;
@@ -308,13 +257,6 @@
             document.getElementById('filter-start-date').value = '';
             document.getElementById('filter-end-date').value = '';
         }
-
-        const openEventIds = [];
-        document.querySelectorAll('.event-body').forEach(body => {
-            if (body.style.display === 'block') {
-                openEventIds.push(body.closest('.event-card').dataset.eventId);
-            }
-        });
 
         const filteredEvents = allEventsData.filter(event => {
             const eventName = event.name.toLowerCase();
@@ -335,7 +277,7 @@
             return;
         }
 
-        const finalHTML = events.map(event => {
+        container.innerHTML = events.map(event => {
             const turnos = (event && Array.isArray(event.turnos)) ? event.turnos : [];
             let needsAttention = false;
 
@@ -351,47 +293,101 @@
 
                     const scaledVolunteersHTML = schedules.map(schedule => {
                         const member = schedule.member || {};
-                        return `<li class="scaled-item">...</li>`; // Conteúdo omitido por brevidade
+                        return `
+                            <li class="scaled-item">
+                                <div class="scaled-info">
+                                    <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'N/A'}" class="scaled-pic">
+                                    <span>${member.full_name || 'N/A'}</span>
+                                </div>
+                                <button class="remove-btn" onclick="removeVolunteer(event, '${schedule.id}', '${member.full_name}' )" title="Remover">&times;</button>
+                            </li>`;
                     }).join('');
 
-                    return `<li class="requirement-item" data-req-id="${req.id}">...</li>`; // Conteúdo omitido por brevidade
+                    return `
+                        <li class="requirement-item" data-req-id="${req.id}">
+                            <div class="requirement-header">
+                                <div class="requirement-role-group">
+                                    <button class="remove-btn" onclick="removeRequirement(event, '${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
+                                    <span class="requirement-role">${req.role || 'Função'}</span>
+                                    <span class="gender-badge">${req.gender || 'Ambos'}</span>
+                                </div>
+                                <span class="requirement-slots">${slotsText}</span>
+                            </div>
+                            ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
+                            <div style="text-align: right; margin-top: 0.5rem;">
+                                <button class="button secondary" onclick="openModal(event, '${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar</button>
+                            </div>
+                        </li>`;
                 }).join('');
 
                 const showTurnoTitle = turnos.length > 1 || (event && event.name) !== (turno && turno.name);
-                const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (...)</h3>` : '';
-                
-                return `<div class="turn-wrapper">...</div>`; // Conteúdo omitido por brevidade
+                const turnoTitleHTML = showTurnoTitle ? `<h3 class="turn-title">${turno.name || 'Turno'} (${formatTime(turno.start_time)} - ${formatTime(turno.end_time)})</h3>` : '';
+                const roleOptions = ministryRoles.map(role => `<option value="${role}">${role}</option>`).join('');
+                const genderOptions = genderEnums.map(g => `<option value="${g}" ${g === 'Ambos' ? 'selected' : ''}>${g}</option>`).join('');
+
+                return `
+                    <div class="turn-wrapper">
+                        <div class="turn-header">
+                            ${turnoTitleHTML}
+                            <button class="button-add-req" onclick="toggleAddRequirementForm(event, '${turno.id}')">+ Nova Vaga</button>
+                        </div>
+                        <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida.</li>'}</ul>
+                        <div class="add-requirement-form" id="form-${turno.id}" style="display: none;">
+                            <select id="role-select-${turno.id}">${roleOptions}</select>
+                            <select id="gender-select-${turno.id}">${genderOptions}</select>
+                            <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
+                            <button class="button" onclick="saveRequirement(event, '${turno.id}')">Salvar</button>
+                        </div>
+                    </div>`;
             }).join('');
-            
+
             const isOpen = openEventIds.includes(event.id);
             return `
                 <div class="event-card" data-event-id="${event.id}">
                     <div class="event-header" onclick="toggleEventBody('${event.id}')">
-                        ...
+                        <div class="event-title-group">
+                            ${needsAttention ? '<div class="attention-indicator" title="Este evento tem vagas abertas"></div>' : ''}
+                            <div>
+                                <h2 class="event-title">${event.name || 'Evento'}</h2>
+                                <p class="event-date">${formatDate(event.date)}</p>
+                            </div>
+                        </div>
+                        <span style="font-size: 1.5rem; color: var(--text-secondary); transform: rotate(90deg); transition: transform 0.2s;" class="accordion-arrow">${isOpen ? '&#9660;' : '&#9654;'}</span>
                     </div>
                     <div class="event-body" style="display: ${isOpen ? 'block' : 'none'};">${turnosHTML}</div>
                 </div>`;
         }).join('');
-        container.innerHTML = finalHTML; // O HTML completo está na sua versão anterior, usei "..." aqui para focar na lógica
     }
 
-    function stopPropagation(event) {
-        event.stopPropagation();
-    }
-
+    // --- FUNÇÕES AUXILIARES E MODAL (PRESERVADAS) ---
+    function stopPropagation(event) { event.stopPropagation(); }
     function toggleAddRequirementForm(event, turnId) {
         stopPropagation(event);
         const form = document.getElementById(`form-${turnId}`);
         if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
     }
-
+    function toggleEventBody(eventId) {
+        const eventBody = document.querySelector(`.event-card[data-event-id="${eventId}"] .event-body`);
+        const arrow = document.querySelector(`.event-card[data-event-id="${eventId}"] .accordion-arrow`);
+        if (eventBody) {
+            const isOpen = eventBody.style.display === 'block';
+            eventBody.style.display = isOpen ? 'none' : 'block';
+            if (arrow) arrow.innerHTML = isOpen ? '&#9654;' : '&#9660;';
+        }
+    }
+    function closeModal(event) {
+        if (event) stopPropagation(event);
+        if(modal) modal.style.display = 'none';
+    }
     async function openModal(event, reqId, eventId, role, gender) {
         stopPropagation(event);
-        modal.style.display = 'flex';
+        currentRequirementId = reqId;
+        document.getElementById('modal-title').textContent = `Adicionar para: ${role}`;
         modalList.innerHTML = '<li>Buscando voluntários...</li>';
+        if(modal) modal.style.display = 'flex';
         try {
-            const { data, error } = await supabaseClient.functions.invoke('get-available-volunteers', {
-                body: { event_id: eventId, gender: gender }
+             const { data, error } = await supabaseClient.functions.invoke('get-available-volunteers', {
+                body: { event_id: eventId, gender: gender, role: role }
             });
             if (error) throw error;
             if (data.length === 0) {
@@ -399,20 +395,52 @@
                 return;
             }
             modalList.innerHTML = data.map(v => `
-                <li class="volunteer-list-item" onclick="selectVolunteer(event, '${v.id}', '${reqId}')">
-                    ...
-                </li>
-            `).join('');
+                <li class="volunteer-list-item" onclick="selectVolunteer('${v.id}')">
+                    <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="scaled-pic">
+                    <div><strong>${v.full_name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary );">${v.leader_score ? `Nota: ${v.leader_score.toFixed(1)}` : ''}</div></div>
+                </li>`).join('');
         } catch (error) {
             modalList.innerHTML = `<li>Erro ao buscar: ${error.message}</li>`;
         }
     }
+    function formatTime(dateString) {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+    }
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const correctedDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+        return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
+    }
 
-    function closeModal(event) {
-        if (event) stopPropagation(event);
-        modal.style.display = 'none';
+    // --- INICIALIZAÇÃO DA PÁGINA (MODIFICADA) ---
+    async function initializePage() {
+        loadingOverlay.style.display = 'flex';
+        document.getElementById('main-content').style.display = 'none';
+
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = '/login'; return; }
+            
+            const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
+            if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
+
+            allEventsData = events || [];
+            applyFilters();
+            
+            document.getElementById('filter-name').addEventListener('input', () => applyFilters());
+            document.getElementById('filter-start-date').addEventListener('change', () => applyFilters());
+            document.getElementById('filter-end-date').addEventListener('change', () => applyFilters());
+            
+            document.getElementById('main-content').style.display = 'block';
+        } catch (error) {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem;">${error.message}</p>`;
+            mainContent.style.display = 'block';
+        } finally {
+            loadingOverlay.style.display = 'none';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
-
