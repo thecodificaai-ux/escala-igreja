@@ -301,6 +301,7 @@ async function fetchAndBuildDashboard(ministryId) {
         const mainContent = document.getElementById('main-content');
         mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
     }
+}
 
     function buildAptitudeChart(distributionData) {
         const ctx = document.getElementById('aptitude-chart').getContext('2d');
