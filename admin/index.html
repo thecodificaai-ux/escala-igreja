@@ -419,50 +419,82 @@
         modal.style.display = 'none';
     }
 
-    async function checkAuth() {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const mainContent = document.getElementById('main-content');
-        loadingOverlay.style.display = 'flex';
-        mainContent.style.display = 'none';
+// SUBSTITUA AS DUAS FUNÇÕES ABAIXO NO SEU CÓDIGO
 
+async function checkAuth() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const mainContent = document.getElementById('main-content');
+    
+    // Garante que tudo comece no estado correto
+    loadingOverlay.style.display = 'flex';
+    mainContent.style.display = 'none';
+
+    try {
         const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) { window.location.href = '/login'; return; }
-        try {
-            const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
-            if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
-            const { data: ministryData } = await supabaseClient.from('ministries').select('id, name, roles').eq('leader_id', memberProfile.id).single();
-            if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
-            currentMinistryId = ministryData.id;
-            ministryRoles = ministryData.roles || [];
-            
-            mainContent.style.display = 'block';
-            document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
-            await fetchAndBuildDashboard(currentMinistryId);
-        } catch (error) { 
-            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Erro: ${error.message}</p>`;
-            mainContent.style.display = 'block';
-        } finally {
-            loadingOverlay.style.display = 'none';
+        if (!session) {
+            window.location.href = '/login';
+            return;
         }
+
+        const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
+        if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
+
+        // A consulta para verificar a liderança deve ser feita na tabela de junção
+        const { data: ministryData, error: leaderError } = await supabaseClient
+            .from('member_ministries')
+            .select('ministries(id, name, roles)')
+            .eq('member_id', memberProfile.id)
+            .eq('is_leader', true)
+            .single();
+
+        if (leaderError || !ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
+        
+        // Extrai os dados aninhados corretamente
+        const ministry = ministryData.ministries;
+        currentMinistryId = ministry.id;
+        ministryRoles = ministry.roles || [];
+        
+        document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministry.name}`;
+        
+        // Chama a função para buscar e construir, e SÓ DEPOIS mostra o conteúdo
+        await fetchAndBuildDashboard(currentMinistryId);
+        
+        // AGORA SIM: Com tudo pronto, mostramos o conteúdo principal
+        mainContent.style.display = 'block';
+
+    } catch (error) { 
+        mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center; font-size: 1.2rem;"><b>Erro de Acesso:</b>  
+${error.message}</p>`;
+        mainContent.style.display = 'block'; // Mostra o container para exibir a mensagem de erro
+    } finally {
+        // Esconde o spinner independentemente do resultado
+        loadingOverlay.style.display = 'none';
+    }
+}
+
+async function fetchAndBuildDashboard(ministryId) {
+    // Esta função agora assume que será chamada dentro de um try/catch
+    // e apenas lança um erro se algo der errado.
+    const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
+    
+    if (error) {
+        // Lança o erro para ser pego pelo catch de checkAuth
+        throw new Error(`Falha ao buscar dados do dashboard: ${error.message}`);
     }
 
-    async function fetchAndBuildDashboard(ministryId) {
-        try {
-            const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
-            if (error) throw error;
-            document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
-            document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
-            document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
-            document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
-            buildManagementTable(data.volunteers);
-            buildAptitudeChart(data.charts.aptitudeDistribution);
-            buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
-            document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
-        } catch (error) { 
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
-        }
-    }
+    // Se não houve erro, continua com a renderização
+    document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
+    document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
+    document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
+    document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
+    
+    buildManagementTable(data.volunteers);
+    buildAptitudeChart(data.charts.aptitudeDistribution);
+    buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
+    
+    // Liga o filtro de busca
+    document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
+}
 
     function buildAptitudeChart(distributionData) {
         const ctx = document.getElementById('aptitude-chart').getContext('2d');
