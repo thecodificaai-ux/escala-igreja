@@ -155,12 +155,11 @@
     const modalList = document.getElementById('modal-volunteer-list');
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    // --- NOVA FUNÇÃO PARA RECARREGAMENTO ELEGANTE ---
+    // --- FUNÇÃO PARA RECARREGAMENTO ELEGANTE ---
     async function reloadData() {
         const scrollY = window.scrollY;
         loadingOverlay.style.display = 'flex';
 
-        // Preserva quais eventos estavam abertos
         const openEventIds = [];
         document.querySelectorAll('.event-body').forEach(body => {
             if (body.style.display === 'block') {
@@ -173,7 +172,7 @@
             if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
             
             allEventsData = events || [];
-            applyFilters(false, openEventIds); // Reaplica filtros e mantém eventos abertos
+            applyFilters(false, openEventIds);
         } catch (error) {
             document.getElementById('events-container').innerHTML = `<p style="color: red;">${error.message}</p>`;
         } finally {
@@ -182,7 +181,7 @@
         }
     }
 
-    // --- FUNÇÕES DE INTERAÇÃO (MODIFICADAS PARA USAR reloadData) ---
+    // --- FUNÇÕES DE INTERAÇÃO ---
     async function saveRequirement(event, turnId) {
         stopPropagation(event);
         const role = document.getElementById(`role-select-${turnId}`).value;
@@ -212,7 +211,6 @@
         stopPropagation(event);
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
-            // CORREÇÃO: O nome da função estava errado no seu código.
             const { error } = await supabaseClient.functions.invoke('delete-schedule-requirement', { body: { requirement_id: reqId } });
             if (error) throw error;
             await reloadData();
@@ -246,7 +244,7 @@
         }
     }
 
-    // --- LÓGICA DE RENDERIZAÇÃO E FILTROS (PRESERVADA E AJUSTADA) ---
+    // --- LÓGICA DE RENDERIZAÇÃO E FILTROS ---
     function applyFilters(clear = false, openEventIds = []) {
         const nameFilter = clear ? '' : document.getElementById('filter-name').value.toLowerCase();
         const startDateFilter = clear ? '' : document.getElementById('filter-start-date').value;
@@ -352,33 +350,34 @@
                                 <p class="event-date">${formatDate(event.date)}</p>
                             </div>
                         </div>
-                        <span style="font-size: 1.5rem; color: var(--text-secondary); transform: rotate(90deg); transition: transform 0.2s;" class="accordion-arrow">${isOpen ? '&#9660;' : '&#9654;'}</span>
                     </div>
                     <div class="event-body" style="display: ${isOpen ? 'block' : 'none'};">${turnosHTML}</div>
                 </div>`;
         }).join('');
     }
 
-    // --- FUNÇÕES AUXILIARES E MODAL (PRESERVADAS) ---
+    // --- FUNÇÕES AUXILIARES E MODAL ---
     function stopPropagation(event) { event.stopPropagation(); }
+
     function toggleAddRequirementForm(event, turnId) {
         stopPropagation(event);
         const form = document.getElementById(`form-${turnId}`);
         if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
     }
+
     function toggleEventBody(eventId) {
         const eventBody = document.querySelector(`.event-card[data-event-id="${eventId}"] .event-body`);
-        const arrow = document.querySelector(`.event-card[data-event-id="${eventId}"] .accordion-arrow`);
         if (eventBody) {
             const isOpen = eventBody.style.display === 'block';
             eventBody.style.display = isOpen ? 'none' : 'block';
-            if (arrow) arrow.innerHTML = isOpen ? '&#9654;' : '&#9660;';
         }
     }
+
     function closeModal(event) {
         if (event) stopPropagation(event);
         if(modal) modal.style.display = 'none';
     }
+
     async function openModal(event, reqId, eventId, role, gender) {
         stopPropagation(event);
         currentRequirementId = reqId;
@@ -403,17 +402,19 @@
             modalList.innerHTML = `<li>Erro ao buscar: ${error.message}</li>`;
         }
     }
+
     function formatTime(dateString) {
         if (!dateString) return '';
         return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
     }
+
     function formatDate(dateString) {
         const date = new Date(dateString);
         const correctedDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
         return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
     }
 
-    // --- INICIALIZAÇÃO DA PÁGINA (MODIFICADA) ---
+    // --- INICIALIZAÇÃO DA PÁGINA ---
     async function initializePage() {
         loadingOverlay.style.display = 'flex';
         document.getElementById('main-content').style.display = 'none';
@@ -444,3 +445,4 @@
 
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
+
