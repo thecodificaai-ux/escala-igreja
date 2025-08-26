@@ -473,39 +473,91 @@ ${error.message}</p>`;
             loadingOverlay.style.display = 'none';
         }
     }
-
     function buildAptitudeChart(distributionData) {
         const ctx = document.getElementById('aptitude-chart').getContext('2d');
         if (aptitudeChart) aptitudeChart.destroy();
         aptitudeChart = new Chart(ctx, {
-            type: 'doughnut', data: { labels: Object.keys(distributionData), datasets: [{ label: 'Nº de Voluntários', data: Object.values(distributionData), backgroundColor: ['#16a34a', '#4f46e5', '#f59e0b', '#ef4444'], hoverOffset: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+            type: 'doughnut', 
+            data: { 
+                labels: Object.keys(distributionData), 
+                datasets: [{ 
+                    label: 'Nº de Voluntários', 
+                    data: Object.values(distributionData), 
+                    backgroundColor: ['#16a34a', '#4f46e5', '#f59e0b', '#ef4444'], 
+                    hoverOffset: 4 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { position: 'top' } 
+                } 
+            }
         });
     }
 
     function buildMonthlyLoadChart(distributionData) {
         const ctx = document.getElementById('monthly-load-chart').getContext('2d');
         if (monthlyLoadChart) monthlyLoadChart.destroy();
+        
         const logicalOrder = ['Nenhuma', '1-2 vezes', '3-4 vezes', '5+ vezes'];
         const orderedLabels = [];
         const orderedData = [];
+        
         logicalOrder.forEach(label => {
             if (distributionData.hasOwnProperty(label)) {
                 orderedLabels.push(label);
                 orderedData.push(distributionData[label]);
             }
         });
+
         monthlyLoadChart = new Chart(ctx, {
             type: 'bar', 
             data: { 
                 labels: orderedLabels, 
                 datasets: [{ 
-                    label: 'Nº de Voluntários', data: orderedData, 
+                    label: 'Nº de Voluntários', 
+                    data: orderedData, 
                     backgroundColor: ['#6b7280', '#a5b4fc', '#f59e0b', '#ef4444'], 
-                    borderColor: '#ffffff', borderWidth: 2, borderRadius: 5 
-                }]
+                    borderColor: '#ffffff', 
+                    borderWidth: 2, 
+                    borderRadius: 5 
+                }] 
+            },
+            options: { 
+                indexAxis: 'y', 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false } 
+                }, 
+                scales: { 
+                    x: { ticks: { stepSize: 1 } }, 
+                    y: { reverse: true } 
+                } 
+            }
+        });
+    }
 
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `feedback-toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { 
+            toast.classList.remove('show'); 
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 500); 
+        }, 4000);
+    }
 
+    // A linha que inicia tudo quando a página carrega.
+    document.addEventListener('DOMContentLoaded', initializePage);
     </script>
 
 </body>
