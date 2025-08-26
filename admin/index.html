@@ -92,8 +92,66 @@
             .charts-container { grid-template-columns: 1fr; }
         }
     </style>
+/* Adicione estas regras ao final do seu bloco <style> */
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); display: none; /* Começa escondido */
+    justify-content: center; align-items: center; z-index: 3000;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.modal-content {
+    background: var(--background); border-radius: var(--radius);
+    width: 90%; max-width: 600px; box-shadow: var(--shadow-md);
+    animation: slide-down 0.3s ease-out;
+}
+@keyframes slide-down {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+}
+.modal-title { margin: 0; font-size: 1.5rem; }
+.modal-close {
+    background: none; border: none; font-size: 2rem; cursor: pointer;
+    color: var(--text-secondary); line-height: 1;
+}
+.modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
+
+.modal-profile-header {
+    display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;
+}
+.modal-profile-pic {
+    width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--primary-color);
+}
+.modal-profile-name { font-size: 1.75rem; font-weight: 700; margin: 0; }
+.modal-profile-displayname { font-size: 1rem; color: var(--text-secondary); }
+
+.modal-section-title {
+    font-size: 1rem; font-weight: 600; color: var(--primary-color);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-top: 2rem; margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;
+}
+
 </head>
 <body>
+<!-- Adicione este HTML antes de </body> -->
+<div id="volunteer-modal" class="modal-overlay" onclick="closeVolunteerModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2 id="modal-title" class="modal-title">Perfil do Voluntário</h2>
+            <button class="modal-close" onclick="closeVolunteerModal()">&times;</button>
+        </div>
+        <div id="modal-body" class="modal-body">
+            <!-- O conteúdo do perfil será inserido aqui pelo JavaScript -->
+        </div>
+    </div>
+</div>
+
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="spinner"></div>
     </div>
@@ -174,68 +232,63 @@
         return Object.values(grouped);
     }
 
-    function buildManagementTable(volunteers) {
-        const managementBody = document.getElementById('management-body');
-        if (volunteers) {
-            allVolunteersData = groupVolunteers(volunteers);
-        }
+// 1. SUBSTITUA A FUNÇÃO buildManagementTable PELA VERSÃO ABAIXO
+// (A única mudança é no onclick da tag <tr>)
 
-        const sortedVolunteers = [...allVolunteersData].sort((a, b) => {
-            const col = currentSort.column;
-            const dir = currentSort.direction === 'asc' ? 1 : -1;
-            if (col === 'full_name') {
-                return a.full_name.localeCompare(b.full_name) * dir;
-            } else {
-                return (Number(a[col]) - Number(b[col])) * dir;
-            }
-        });
-
-        if (sortedVolunteers.length === 0) {
-            managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
-            return;
-        }
-        let rowsHTML = '';
-        sortedVolunteers.forEach(v => {
-            rowsHTML += `
-                <tr class="parent-row" onclick="toggleChildren(this, '${v.member_id}')">
-                    <td>
-                        <div class="volunteer-info">
-                            <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
-                            <div>
-                                <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
-                                <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td style="text-align: center; font-weight: 600;">${v.total_roles}</td>
-                    <td style="text-align: center; font-weight: 600;">${v.total_schedules_month}</td>
-                    <td>
-                        <input type="number" style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" value="${v.average_score}" readonly>
-                    </td>
-                </tr>
-            `;
-            v.roles.forEach(role => {
-                const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
-                rowsHTML += `
-                    <tr class="child-row" data-parent-id="${v.member_id}">
-                        <td class="role-name">${role.role}</td>
-                        <td><span class="aptitude-badge ${levelClass}">${role.aptitude_level || 'N/A'}</span></td>
-                        <td style="text-align: center;">${role.schedule_count_current_month}</td>
-                        <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}" onchange="updateLeaderScore('${role.member_ministry_id}', this.value)"></td>
-                    </tr>
-                `;
-            });
-        });
-        managementBody.innerHTML = rowsHTML;
-
-        document.querySelectorAll('.sortable-header').forEach(header => {
-            header.classList.remove('sort-asc', 'sort-desc');
-        });
-        const activeHeader = document.querySelector(`.sortable-header[onclick="sortTable('${currentSort.column}')"]`);
-        if (activeHeader) {
-            activeHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-        }
+function buildManagementTable(volunteers) {
+    const managementBody = document.getElementById('management-body');
+    if (volunteers) {
+        allVolunteersData = groupVolunteers(volunteers);
     }
+    // ... (toda a lógica de ordenação permanece a mesma)
+    const sortedVolunteers = [...allVolunteersData].sort((a, b) => {
+        const col = currentSort.column;
+        const dir = currentSort.direction === 'asc' ? 1 : -1;
+        if (col === 'full_name') {
+            return a.full_name.localeCompare(b.full_name) * dir;
+        } else {
+            return (Number(a[col]) - Number(b[col])) * dir;
+        }
+    });
+
+    if (sortedVolunteers.length === 0) {
+        managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
+        return;
+    }
+    let rowsHTML = '';
+    sortedVolunteers.forEach(v => {
+        // MUDANÇA AQUI: O onclick agora chama openVolunteerModal
+        rowsHTML += `
+            <tr class="parent-row" onclick="openVolunteerModal('${v.member_id}')">
+                <td>
+                    <div class="volunteer-info">
+                        <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
+                        <div>
+                            <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
+                            <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="text-align: center; font-weight: 600;">${v.total_roles}</td>
+                <td style="text-align: center; font-weight: 600;">${v.total_schedules_month}</td>
+                <td>
+                    <input type="number" style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" value="${v.average_score}" readonly>
+                </td>
+            </tr>
+        `;
+        // As linhas filhas não são mais necessárias, então podemos remover o loop delas
+    });
+    managementBody.innerHTML = rowsHTML;
+
+    // ... (a lógica de atualizar os cabeçalhos permanece a mesma)
+    document.querySelectorAll('.sortable-header').forEach(header => {
+        header.classList.remove('sort-asc', 'sort-desc');
+    });
+    const activeHeader = document.querySelector(`.sortable-header[onclick="sortTable('${currentSort.column}')"]`);
+    if (activeHeader) {
+        activeHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+}
 
     function sortTable(columnName) {
         if (currentSort.column === columnName) {
@@ -397,6 +450,52 @@ function filterTableByName() {
     }
 
     document.addEventListener('DOMContentLoaded', checkAuth);
+                          function openVolunteerModal(memberId) {
+    const volunteer = allVolunteersData.find(v => v.member_id === memberId);
+    if (!volunteer) return;
+
+    const modal = document.getElementById('volunteer-modal');
+    const modalBody = document.getElementById('modal-body');
+
+    let rolesHTML = '';
+    volunteer.roles.forEach(role => {
+        const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
+        rolesHTML += `
+            <tr>
+                <td class="role-name">${role.role}</td>
+                <td><span class="aptitude-badge ${levelClass}">${role.aptitude_level || 'N/A'}</span></td>
+                <td style="text-align: center;">${role.schedule_count_current_month}</td>
+                <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}" onchange="updateLeaderScore('${role.member_ministry_id}', this.value)"></td>
+            </tr>
+        `;
+    });
+
+    modalBody.innerHTML = `
+        <div class="modal-profile-header">
+            <img src="${volunteer.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${volunteer.full_name}" class="modal-profile-pic">
+            <div>
+                <h3 class="modal-profile-name">${volunteer.full_name}</h3>
+                <p class="modal-profile-displayname">${volunteer.display_name || ''}</p>
+            </div>
+        </div>
+        <h4 class="modal-section-title">Funções e Avaliações</h4>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Função</th><th>Nível</th><th>Escalado (Mês )</th><th>Nota</th></tr>
+                </thead>
+                <tbody>${rolesHTML}</tbody>
+            </table>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+}
+
+function closeVolunteerModal() {
+    const modal = document.getElementById('volunteer-modal');
+    modal.style.display = 'none';
+}
 </script>
 
 </body>
