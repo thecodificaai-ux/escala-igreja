@@ -11,48 +11,47 @@
             --primary-color: #4f46e5; --primary-dark: #4338ca; --secondary-color: #f3f4f6;
             --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
             --background: #ffffff; --error-color: #ef4444; --success-color: #10b981;
-            --warning-color: #f59e0b; /* Adicionando cor de aviso */
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1  ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --warning-color: #f59e0b; --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1 ), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --radius: 12px;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        /* CSS do Cabeçalho ATUALIZADO */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 1.5rem; 
-            flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
-            gap: 1rem; /* Espaçamento entre o título e os botões */
-        }
-        .header-actions {
-            display: flex;
-            gap: 0.75rem; /* Espaçamento entre os botões */
-            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 1rem; }
+        @media (min-width: 768px) { body { padding: 2rem; } }
 
-        h1 { font-weight: 700; font-size: 2.25rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+        .header-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        h1 { font-weight: 700; font-size: 1.75rem; }
+        @media (min-width: 768px) { h1 { font-size: 2.25rem; } }
         .button { background-color: var(--primary-color); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; }
         .button:hover { background-color: var(--primary-dark); }
         .button.secondary { background-color: var(--text-secondary); }
         .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 2rem; }
-        .event-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-bottom: 1px solid var(--border-color); }
-        .event-title { font-size: 1.5rem; font-weight: 600; margin: 0; }
-        .event-date { font-size: 1rem; font-weight: 500; color: var(--primary-color); margin-top: 0.25rem; }
-        .event-body { padding: 0 1.5rem 1.5rem 1.5rem; }
+
+        /* --- NOVOS ESTILOS PARA FILTROS E ACORDEÃO --- */
+        .filters-bar { background: var(--background); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; box-shadow: var(--shadow-md); }
+        .filter-group { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; min-width: 150px; }
+        .filter-group label { font-weight: 500; font-size: 0.9rem; }
+        .filter-group input { padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; }
+        
+        .event-card { background: var(--background); border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 1rem; overflow: hidden; }
+        .event-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; cursor: pointer; transition: background-color 0.2s; }
+        .event-header:hover { background-color: #f9fafb; }
+        .event-title-group { display: flex; align-items: center; gap: 1rem; }
+        .attention-indicator { width: 10px; height: 10px; background-color: var(--warning-color); border-radius: 50%; }
+        .event-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+        .event-date { font-size: 1rem; font-weight: 500; color: var(--text-secondary); margin-top: 0.25rem; }
+        .event-body { padding: 0 1.5rem 1.5rem 1.5rem; border-top: 1px solid var(--border-color); display: none; /* Começa escondido */ }
+        /* --- FIM DOS NOVOS ESTILOS --- */
+
         .turn-wrapper { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); }
         .turn-wrapper:first-child { margin-top: 0; padding-top: 0; border-top: none; }
         .turn-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
         .turn-title { font-size: 1.1rem; font-weight: 600; color: var(--primary-color); margin: 0; }
-        .button-add-req { background-color: var(--success-color); color: white; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .button-add-req:hover { background-color: #059669; }
+        .button-add-req { background-color: var(--success-color); color: white; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-weight: 600; cursor: pointer; }
         .requirements-list { list-style: none; padding: 0; margin: 0; }
         .requirement-item { padding: 1rem 0; border-bottom: 1px solid var(--secondary-color); }
         .requirement-item:last-child { border-bottom: none; }
-        .requirement-header { display: flex; justify-content: space-between; align-items: center; }
+        .requirement-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
         .requirement-role-group { display: flex; align-items: center; gap: 0.75rem; }
         .requirement-role { font-size: 1.1rem; font-weight: 600; }
         .gender-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 12px; background-color: var(--secondary-color); color: var(--text-secondary); font-weight: 500; }
@@ -62,9 +61,8 @@
         .scaled-info { display: flex; align-items: center; gap: 0.75rem; }
         .scaled-pic { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .remove-btn { background: none; border: none; color: var(--error-color); font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
-        .add-requirement-form { padding-top: 1rem; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-        .form-row select, .form-row input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
+        .add-requirement-form { padding-top: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .add-requirement-form select, .add-requirement-form input { padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -79,9 +77,6 @@
     <div id="loading-container" style="text-align: center; padding-top: 4rem;">Carregando...</div>
     <div id="main-content" class="container" style="display: none;">
         
-        <!-- ================================================== -->
-        <!--  CABEÇALHO ATUALIZADO COM OS NOVOS BOTÕES -->
-        <!-- ================================================== -->
         <div class="header">
             <h1>Gerenciar Escalas</h1>
             <div class="header-actions">
@@ -91,14 +86,34 @@
             </div>
         </div>
 
-        <div id="events-container" class="events-container"></div>
+        <!-- NOVA BARRA DE FILTROS -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label for="filter-name">Buscar por Nome</label>
+                <input type="text" id="filter-name" placeholder="Ex: Celebração, Vigília...">
+            </div>
+            <div class="filter-group">
+                <label for="filter-start-date">De</label>
+                <input type="date" id="filter-start-date">
+            </div>
+            <div class="filter-group">
+                <label for="filter-end-date">Até</label>
+                <input type="date" id="filter-end-date">
+            </div>
+            <button class="button" onclick="applyFilters(true)">Limpar</button>
+        </div>
+
+        <div id="events-container" class="events-container">
+            <!-- Eventos serão renderizados aqui -->
+        </div>
     </div>
 
+    <!-- Modal (sem alterações) -->
     <div id="add-volunteer-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modal-title" class="modal-title">Adicionar Voluntário</h2>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button class="modal-close" onclick="closeModal(event)">&times;</button>
             </div>
             <div id="modal-body">
                 <p>Buscando voluntários disponíveis...</p>
@@ -106,15 +121,18 @@
             </div>
         </div>
     </div>
+</body>
+</html>
 <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
     
     const ministryRoles = ["Projeção", "Transmissão", "Edição", "Foto", "Stories", "Câmera"];
     const genderEnums = ["Ambos", "Masculino", "Feminino"];
 
     let currentRequirementId = null;
+    let allEventsData = []; // Armazena todos os eventos para filtrar no front-end
     const modal = document.getElementById('add-volunteer-modal');
     const modalList = document.getElementById('modal-volunteer-list');
 
@@ -129,21 +147,60 @@
         return correctedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long' });
     }
 
+    // --- NOVAS FUNÇÕES DE USABILIDADE ---
+    function toggleEventBody(eventId) {
+        const eventBody = document.querySelector(`.event-card[data-event-id="${eventId}"] .event-body`);
+        if (eventBody) {
+            eventBody.style.display = eventBody.style.display === 'block' ? 'none' : 'block';
+        }
+    }
+
+    function applyFilters(clear = false) {
+        const nameFilter = clear ? '' : document.getElementById('filter-name').value.toLowerCase();
+        const startDateFilter = clear ? '' : document.getElementById('filter-start-date').value;
+        const endDateFilter = clear ? '' : document.getElementById('filter-end-date').value;
+
+        if (clear) {
+            document.getElementById('filter-name').value = '';
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+        }
+
+        const filteredEvents = allEventsData.filter(event => {
+            const eventName = event.name.toLowerCase();
+            const eventDate = event.date; // Formato YYYY-MM-DD
+
+            const nameMatch = eventName.includes(nameFilter);
+            const startDateMatch = !startDateFilter || eventDate >= startDateFilter;
+            const endDateMatch = !endDateFilter || eventDate <= endDateFilter;
+
+            return nameMatch && startDateMatch && endDateMatch;
+        });
+
+        renderEvents(filteredEvents);
+    }
+    // --- FIM DAS NOVAS FUNÇÕES ---
+
     function renderEvents(events) {
         const container = document.getElementById('events-container');
         if (!Array.isArray(events) || events.length === 0) {
-            container.innerHTML = '<p>Nenhum evento com vagas para seu ministério encontrado para o mês atual.</p>';
+            container.innerHTML = '<p>Nenhum evento encontrado para os filtros selecionados.</p>';
             return;
         }
 
         const finalHTML = events.map(event => {
             const turnos = (event && Array.isArray(event.turnos)) ? event.turnos : [];
+            let needsAttention = false;
+
             const turnosHTML = turnos.map(turno => {
                 const requirements = (turno && Array.isArray(turno.requirements)) ? turno.requirements : [];
                 const requirementsHTML = requirements.map(req => {
                     const schedules = (req && Array.isArray(req.schedules)) ? req.schedules : [];
                     const scaledCount = schedules.length;
                     const neededCount = req.quantity_needed || 0;
+                    if (scaledCount < neededCount) {
+                        needsAttention = true;
+                    }
                     const slotsText = `${scaledCount} / ${neededCount} preenchidas`;
                     const isFull = scaledCount >= neededCount;
 
@@ -155,7 +212,7 @@
                                     <img src="${member.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${member.full_name || 'N/A'}" class="scaled-pic">
                                     <span>${member.full_name || 'N/A'}</span>
                                 </div>
-                                <button class="remove-btn" onclick="removeVolunteer('${schedule.id}', '${member.full_name}'  )" title="Remover">&times;</button>
+                                <button class="remove-btn" onclick="removeVolunteer(event, '${schedule.id}', '${member.full_name}' )" title="Remover">&times;</button>
                             </li>`;
                     }).join('');
 
@@ -163,7 +220,7 @@
                         <li class="requirement-item" data-req-id="${req.id}">
                             <div class="requirement-header">
                                 <div class="requirement-role-group">
-                                    <button class="remove-btn" onclick="removeRequirement('${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
+                                    <button class="remove-btn" onclick="removeRequirement(event, '${req.id}', '${req.role}')" title="Remover Vaga">&times;</button>
                                     <span class="requirement-role">${req.role || 'Função'}</span>
                                     <span class="gender-badge">${req.gender || 'Ambos'}</span>
                                 </div>
@@ -171,7 +228,7 @@
                             </div>
                             ${scaledVolunteersHTML ? `<ul class="scaled-list">${scaledVolunteersHTML}</ul>` : ''}
                             <div style="text-align: right; margin-top: 0.5rem;">
-                                <button class="button secondary" onclick="openModal('${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar</button>
+                                <button class="button secondary" onclick="openModal(event, '${req.id}', '${turno.id}', '${req.role}', '${req.gender}')" ${isFull ? 'disabled' : ''}>Adicionar</button>
                             </div>
                         </li>`;
                 }).join('');
@@ -186,10 +243,10 @@
                     <div class="turn-wrapper">
                         <div class="turn-header">
                             ${turnoTitleHTML}
-                            <button class="button-add-req" onclick="toggleAddRequirementForm('${turno.id}')">+ Nova Vaga</button>
+                            <button class="button-add-req" onclick="toggleAddRequirementForm(event, '${turno.id}')">+ Nova Vaga</button>
                         </div>
                         <ul class="requirements-list">${requirementsHTML || '<li>Nenhuma vaga definida.</li>'}</ul>
-                        <div class="add-requirement-form form-row" id="form-${turno.id}" style="display: none;">
+                        <div class="add-requirement-form" id="form-${turno.id}" style="display: none;">
                             <select id="role-select-${turno.id}">${roleOptions}</select>
                             <select id="gender-select-${turno.id}">${genderOptions}</select>
                             <input type="number" id="quantity-input-${turno.id}" min="1" value="1" style="width: 60px;">
@@ -199,12 +256,16 @@
             }).join('');
 
             return `
-                <div class="event-card" data-event-id="${event.id}">
-                    <div class="event-header">
-                        <div>
-                            <h2 class="event-title">${event.name || 'Evento'}</h2>
-                            <p class="event-date">${formatDate(event.date)}</p>
+                <div class="event-card" data-event-id="${event.id}" data-event-date="${event.date}" data-event-name="${event.name}">
+                    <div class="event-header" onclick="toggleEventBody('${event.id}')">
+                        <div class="event-title-group">
+                            ${needsAttention ? '<div class="attention-indicator" title="Este evento tem vagas abertas"></div>' : ''}
+                            <div>
+                                <h2 class="event-title">${event.name || 'Evento'}</h2>
+                                <p class="event-date">${formatDate(event.date)}</p>
+                            </div>
                         </div>
+                        <span style="font-size: 1.5rem; color: var(--text-secondary); transform: rotate(90deg);">&#10095;</span>
                     </div>
                     <div class="event-body">${turnosHTML}</div>
                 </div>`;
@@ -212,11 +273,18 @@
         container.innerHTML = finalHTML;
     }
 
-    function toggleAddRequirementForm(turnId) {
+    function stopPropagation(event) {
+        event.stopPropagation();
+    }
+
+    function toggleAddRequirementForm(event, turnId) {
+        stopPropagation(event);
         const form = document.getElementById(`form-${turnId}`);
         if (form) form.style.display = form.style.display === 'none' ? 'flex' : 'none';
     }
-    async function saveRequirement(clickEvent, turnId) {
+
+    async function saveRequirement(event, turnId) {
+        stopPropagation(event);
         const role = document.getElementById(`role-select-${turnId}`).value;
         const gender = document.getElementById(`gender-select-${turnId}`).value;
         const quantity = document.getElementById(`quantity-input-${turnId}`).value;
@@ -224,7 +292,7 @@
             alert('Por favor, preencha todos os campos.');
             return;
         }
-        const button = clickEvent.target;
+        const button = event.target;
         button.disabled = true;
         button.textContent = 'Salvando...';
         try {
@@ -239,7 +307,9 @@
             button.textContent = 'Salvar';
         }
     }
-    async function removeRequirement(reqId, role) {
+
+    async function removeRequirement(event, reqId, role) {
+        stopPropagation(event);
         if (!confirm(`Tem certeza que deseja remover a vaga para "${role}"?`)) return;
         try {
             const { error } = await supabaseClient.functions.invoke('remove-vaga', { body: { requirement_id: reqId } });
@@ -249,7 +319,9 @@
             alert(`Erro ao remover vaga: ${error.message}`);
         }
     }
-    async function removeVolunteer(scheduleId, volunteerName) {
+
+    async function removeVolunteer(event, scheduleId, volunteerName) {
+        stopPropagation(event);
         if (!confirm(`Tem certeza que deseja remover ${volunteerName} desta escala?`)) return;
         try {
             const { error } = await supabaseClient.functions.invoke('delete-schedule', { body: { schedule_id: scheduleId } });
@@ -259,17 +331,21 @@
             alert(`Erro ao remover voluntário: ${error.message}`);
         }
     }
-    function closeModal() {
+
+    function closeModal(event) {
+        if (event) stopPropagation(event);
         if(modal) modal.style.display = 'none';
     }
-    async function openModal(reqId, eventId, role, gender) {
+
+    async function openModal(event, reqId, eventId, role, gender) {
+        stopPropagation(event);
         currentRequirementId = reqId;
         document.getElementById('modal-title').textContent = `Adicionar para: ${role}`;
         modalList.innerHTML = '<li>Buscando voluntários...</li>';
         if(modal) modal.style.display = 'flex';
         try {
              const { data, error } = await supabaseClient.functions.invoke('get-available-volunteers', {
-            body: { event_id: eventId, gender: gender, role: role }
+                body: { event_id: eventId, gender: gender, role: role }
             });
             if (error) throw error;
             if (data.length === 0) {
@@ -279,12 +355,13 @@
             modalList.innerHTML = data.map(v => `
                 <li class="volunteer-list-item" onclick="selectVolunteer('${v.id}')">
                     <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="scaled-pic">
-                    <div><strong>${v.full_name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary  );">Nota: ${v.leader_score.toFixed(1)}</div></div>
+                    <div><strong>${v.full_name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary );">${v.leader_score ? `Nota: ${v.leader_score.toFixed(1)}` : ''}</div></div>
                 </li>`).join('');
         } catch (error) {
             modalList.innerHTML = `<li>Erro ao buscar: ${error.message}</li>`;
         }
     }
+
     async function selectVolunteer(memberId) {
         try {
             const { error } = await supabaseClient.functions.invoke('create-schedule', {
@@ -313,10 +390,15 @@
             }
             
             const { data: events, error } = await supabaseClient.functions.invoke('get-schedule-management-data');
-
             if (error) throw new Error(`Erro ao buscar Eventos: ${error.message}`);
 
-            renderEvents(events);
+            allEventsData = events || [];
+            applyFilters(); // Aplica filtros (ou a falta deles) na carga inicial
+            
+            // Adiciona listeners para os filtros
+            document.getElementById('filter-name').addEventListener('input', () => applyFilters());
+            document.getElementById('filter-start-date').addEventListener('change', () => applyFilters());
+            document.getElementById('filter-end-date').addEventListener('change', () => applyFilters());
             
             if(loadingContainer) loadingContainer.style.display = 'none';
             if(mainContent) mainContent.style.display = 'block';
@@ -324,7 +406,7 @@
         } catch (error) {
             console.error("Erro fatal na inicialização:", error);
             if(loadingContainer) {
-                loadingContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                loadingContainer.innerHTML = `<p style="color: red;">Erro fatal: ${error.message}</p>`;
             }
         }
     }
