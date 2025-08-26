@@ -17,6 +17,7 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
 
+        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO --- */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(243, 244, 246, 0.8); display: flex;
@@ -34,9 +35,7 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
         .button-group { display: flex; gap: 1rem; }
-        .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; }
-        .button:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        
+        .button { background-color: var(--primary-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
         .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .widget { background: var(--background); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow-md); }
         .widget-title { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -48,6 +47,7 @@
         th, td { padding: 1rem 1.5rem; text-align: left; vertical-align: middle; white-space: nowrap; }
         th { border-bottom: 2px solid var(--border-color); }
         
+        /* --- ESTILOS PARA TABELA ORDENÁVEL --- */
         .sortable-header {
             cursor: pointer; position: relative; user-select: none; 
             background-color: var(--primary-color); color: white;
@@ -62,13 +62,18 @@
 
         .volunteer-info { display: flex; align-items: center; gap: 1rem; }
         .volunteer-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .aptitude-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
+        .aptitude-badge.especialista { background-color: #dcfce7; color: #166534; }
+        .aptitude-badge.confiável { background-color: #e0e7ff; color: #3730a3; }
+        .aptitude-badge.em-desenvolvimento { background-color: #fef3c7; color: #92400e; }
+        .aptitude-badge.em-treinamento { background-color: #fee2e2; color: #991b1b; }
         .warning-icon { color: var(--warning-color); font-weight: bold; font-size: 1.2rem; cursor: help; }
-        .feedback-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 600; box-shadow: var(--shadow-md); transition: bottom 0.5s ease-in-out; z-index: 4000; }
+        .feedback-toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 600; box-shadow: var(--shadow-md); transition: bottom 0.5s ease-in-out; z-index: 1000; }
         .feedback-toast.show { bottom: 20px; }
         .feedback-toast.success { background-color: var(--success-color); }
         .feedback-toast.error { background-color: var(--error-color); }
-        .main-table-row { cursor: pointer; border-top: 1px solid var(--border-color); }
-        .main-table-row:hover { background-color: #f9fafb; }
+        .parent-row { cursor: pointer; border-top: 1px solid var(--border-color); }
+        .parent-row:hover { background-color: #f9fafb; }
         
         /* --- ESTILOS DO MODAL --- */
         .modal-overlay {
@@ -79,24 +84,30 @@
         }
         .modal-content {
             background: var(--background); border-radius: var(--radius);
-            width: 90%; max-width: 700px; box-shadow: var(--shadow-md);
-            animation: slide-down 0.3s ease-out; display: flex; flex-direction: column;
+            width: 90%; max-width: 600px; box-shadow: var(--shadow-md);
+            animation: slide-down 0.3s ease-out;
         }
-        @keyframes slide-down { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slide-down {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
         .modal-header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 1.5rem; border-bottom: 1px solid var(--border-color);
         }
         .modal-title { margin: 0; font-size: 1.5rem; }
-        .modal-close { background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--text-secondary); line-height: 1; }
-        .modal-body { padding: 1.5rem; max-height: 65vh; overflow-y: auto; }
-        .modal-footer {
-            padding: 1rem 1.5rem; border-top: 1px solid var(--border-color);
-            display: flex; justify-content: flex-end; background-color: #f9fafb;
-            border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius);
+        .modal-close {
+            background: none; border: none; font-size: 2rem; cursor: pointer;
+            color: var(--text-secondary); line-height: 1;
         }
-        .modal-profile-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
-        .modal-profile-pic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-color); }
+        .modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
+        .modal-profile-header {
+            display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .modal-profile-pic {
+            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--primary-color);
+        }
         .modal-profile-name { font-size: 1.75rem; font-weight: 700; margin: 0; }
         .modal-profile-displayname { font-size: 1rem; color: var(--text-secondary); }
         .modal-section-title {
@@ -106,13 +117,6 @@
             border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;
         }
         .role-name { font-weight: 600; color: var(--primary-color); }
-        .aptitude-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
-        .aptitude-badge.especialista { background-color: #dcfce7; color: #166534; }
-        .aptitude-badge.confiável { background-color: #e0e7ff; color: #3730a3; }
-        .aptitude-badge.em-desenvolvimento { background-color: #fef3c7; color: #92400e; }
-        .aptitude-badge.em-treinamento { background-color: #fee2e2; color: #991b1b; }
-        .delete-role-btn { background: none; border: none; color: var(--error-color); font-size: 1.5rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
-        .add-role-form { display: flex; gap: 1rem; margin-top: 1rem; align-items: center; }
 
         @media (max-width: 768px) {
             body { padding: 1rem; }
@@ -179,15 +183,13 @@
                 <button class="modal-close" onclick="closeVolunteerModal()">&times;</button>
             </div>
             <div id="modal-body" class="modal-body">
-                <!-- Conteúdo dinâmico -->
-            </div>
-            <div class="modal-footer">
-                <button id="save-changes-btn" class="button" style="background-color: var(--success-color);">Salvar Alterações</button>
+                <!-- O conteúdo do perfil será inserido aqui pelo JavaScript -->
             </div>
         </div>
     </div>
-<script>
-     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
+    
+  <script>
+    const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
@@ -195,7 +197,6 @@
     let aptitudeChart = null, monthlyLoadChart = null, currentMinistryId = null;
     let allVolunteersData = [];
     let currentSort = { column: 'full_name', direction: 'asc' };
-    let ministryRoles = [];
 
     function groupVolunteers(flatList) {
         const grouped = {};
@@ -225,6 +226,7 @@
         if (volunteers) {
             allVolunteersData = groupVolunteers(volunteers);
         }
+
         const sortedVolunteers = [...allVolunteersData].sort((a, b) => {
             const col = currentSort.column;
             const dir = currentSort.direction === 'asc' ? 1 : -1;
@@ -234,6 +236,7 @@
                 return (Number(a[col]) - Number(b[col])) * dir;
             }
         });
+
         if (sortedVolunteers.length === 0) {
             managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
             return;
@@ -241,7 +244,7 @@
         let rowsHTML = '';
         sortedVolunteers.forEach(v => {
             rowsHTML += `
-                <tr class="main-table-row" onclick="openVolunteerModal('${v.member_id}')">
+                <tr class="parent-row" onclick="openVolunteerModal('${v.member_id}')">
                     <td>
                         <div class="volunteer-info">
                             <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
@@ -260,6 +263,7 @@
             `;
         });
         managementBody.innerHTML = rowsHTML;
+
         document.querySelectorAll('.sortable-header').forEach(header => {
             header.classList.remove('sort-asc', 'sort-desc');
         });
@@ -281,34 +285,37 @@
 
     function filterTableByName() {
         const searchTerm = document.getElementById('volunteer-search').value.toLowerCase();
-        const rows = document.querySelectorAll('#management-body tr.main-table-row');
+        const rows = document.querySelectorAll('#management-body tr.parent-row');
         rows.forEach(row => {
             const volunteerName = row.cells[0].textContent.toLowerCase();
-            row.style.display = volunteerName.includes(searchTerm) ? '' : 'none';
+            if (volunteerName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
         });
     }
 
     function openVolunteerModal(memberId) {
         const volunteer = allVolunteersData.find(v => v.member_id === memberId);
         if (!volunteer) return;
+
         const modal = document.getElementById('volunteer-modal');
         const modalBody = document.getElementById('modal-body');
-        const assignedRoles = volunteer.roles.map(r => r.role);
-        const availableRoles = ministryRoles.filter(r => !assignedRoles.includes(r));
-        const roleOptions = availableRoles.map(r => `<option value="${r}">${r}</option>`).join('');
+
         let rolesHTML = '';
         volunteer.roles.forEach(role => {
             const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
             rolesHTML += `
-                <tr data-member-ministry-id="${role.member_ministry_id}">
+                <tr>
                     <td class="role-name">${role.role}</td>
                     <td><span class="aptitude-badge ${levelClass}">${role.aptitude_level || 'N/A'}</span></td>
                     <td style="text-align: center;">${role.schedule_count_current_month}</td>
-                    <td><input type="number" class="score-input" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}"></td>
-                    <td><button class="delete-role-btn" onclick="this.closest('tr').remove()">&times;</button></td>
+                    <td><input type="number" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="${Number(role.leader_score).toFixed(1)}" onchange="updateLeaderScore('${role.member_ministry_id}', this.value)"></td>
                 </tr>
             `;
         });
+
         modalBody.innerHTML = `
             <div class="modal-profile-header">
                 <img src="${volunteer.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${volunteer.full_name}" class="modal-profile-pic">
@@ -319,82 +326,15 @@
             </div>
             <h4 class="modal-section-title">Funções e Avaliações</h4>
             <div class="table-wrapper">
-                <table id="roles-table">
-                    <thead><tr><th>Função</th><th>Nível</th><th>Escalado (Mês )</th><th>Nota</th><th></th></tr></thead>
+                <table>
+                    <thead>
+                        <tr><th>Função</th><th>Nível</th><th>Escalado (Mês )</th><th>Nota</th></tr>
+                    </thead>
                     <tbody>${rolesHTML}</tbody>
                 </table>
             </div>
-            <h4 class="modal-section-title">Adicionar Nova Função</h4>
-            <div class="add-role-form">
-                <select id="new-role-select" style="flex-grow: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color);">${roleOptions}</select>
-                <button class="button" style="background-color: var(--success-color);" onclick="addRoleToTable()" ${availableRoles.length === 0 ? 'disabled' : ''}>Adicionar</button>
-            </div>
         `;
-        document.getElementById('save-changes-btn').onclick = () => saveAllChanges(memberId, volunteer.roles);
         modal.style.display = 'flex';
-    }
-
-    function addRoleToTable() {
-        const select = document.getElementById('new-role-select');
-        const roleName = select.value;
-        if (!roleName) return;
-        const tableBody = document.querySelector('#roles-table tbody');
-        const newRow = tableBody.insertRow();
-        newRow.dataset.isNew = "true";
-        newRow.innerHTML = `
-            <td class="role-name">${roleName}</td>
-            <td><span class="aptitude-badge em-treinamento">Em Treinamento</span></td>
-            <td style="text-align: center;">0</td>
-            <td><input type="number" class="score-input" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="5.0"></td>
-            <td><button class="delete-role-btn" onclick="this.closest('tr').remove()">&times;</button></td>
-        `;
-        select.remove(select.selectedIndex);
-        if (select.options.length === 0) {
-            select.nextElementSibling.disabled = true;
-        }
-    }
-
-    async function saveAllChanges(memberId, originalRoles) {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = 'flex';
-        const promises = [];
-        const currentRoleIds = new Set();
-        document.querySelectorAll('#roles-table tbody tr').forEach(row => {
-            const roleName = row.cells[0].textContent;
-            const newScore = parseFloat(row.querySelector('.score-input').value);
-            if (row.dataset.isNew === "true") {
-                promises.push(supabaseClient.functions.invoke('add-volunteer-role', {
-                    body: { member_id: memberId, ministry_id: currentMinistryId, role_name: roleName }
-                }));
-            } else {
-                const memberMinistryId = row.dataset.memberMinistryId;
-                currentRoleIds.add(memberMinistryId);
-                const originalRole = originalRoles.find(r => r.member_ministry_id === memberMinistryId);
-                if (originalRole && parseFloat(originalRole.leader_score) !== newScore) {
-                    promises.push(supabaseClient.functions.invoke('update-leader-score', {
-                        body: { memberMinistryId, newScore }
-                    }));
-                }
-            }
-        });
-        originalRoles.forEach(originalRole => {
-            if (!currentRoleIds.has(originalRole.member_ministry_id)) {
-                promises.push(supabaseClient.functions.invoke('remove-volunteer-role', {
-                    body: { member_ministry_id: originalRole.member_ministry_id }
-                }));
-            }
-        });
-        try {
-            await Promise.all(promises);
-            showToast('Alterações salvas com sucesso!', 'success');
-        } catch (error) {
-            console.error("Erro ao salvar alterações:", error);
-            showToast(`Erro ao salvar: ${error.message}`, 'error');
-        } finally {
-            closeVolunteerModal();
-            await checkAuth();
-            loadingOverlay.style.display = 'none';
-        }
     }
 
     function closeVolunteerModal() {
@@ -408,41 +348,20 @@
         loadingOverlay.style.display = 'flex';
         mainContent.style.display = 'none';
 
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { window.location.href = '/login'; return; }
         try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                window.location.href = '/login';
-                return;
-            }
-
-            const { data: memberProfile, error: memberError } = await supabaseClient
-                .from('members')
-                .select('id')
-                .eq('user_id', session.user.id)
-                .single();
-            if (memberError || !memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
-
-            const { data: ministryLeadership, error: leaderError } = await supabaseClient
-                .from('member_ministries')
-                .select('ministries(id, name, roles)')
-                .eq('member_id', memberProfile.id)
-                .eq('is_leader', true)
-                .single();
-            if (leaderError || !ministryLeadership) throw new Error("Você não está designado como líder de nenhum ministério.");
-            
-            const ministry = ministryLeadership.ministries;
-            currentMinistryId = ministry.id;
-            ministryRoles = ministry.roles || [];
-            
-            document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministry.name}`;
-            
-            await fetchAndBuildDashboard(currentMinistryId);
+            const { data: memberProfile } = await supabaseClient.from('members').select('id').eq('user_id', session.user.id).single();
+            if (!memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
+            const { data: ministryData } = await supabaseClient.from('ministries').select('id, name').eq('leader_id', memberProfile.id).single();
+            if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
+            currentMinistryId = ministryData.id;
             
             mainContent.style.display = 'block';
-
+            document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
+            await fetchAndBuildDashboard(currentMinistryId);
         } catch (error) { 
-            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center; font-size: 1.2rem;"><b>Erro de Acesso:</b>  
-${error.message}</p>`;
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Erro: ${error.message}</p>`;
             mainContent.style.display = 'block';
         } finally {
             loadingOverlay.style.display = 'none';
@@ -451,24 +370,19 @@ ${error.message}</p>`;
 
     async function fetchAndBuildDashboard(ministryId) {
         try {
-            const { data, error } = await supabaseClient.functions.invoke('get-ministry-members', {
-                body: { ministry_id: ministryId }
-            });
+            const { data, error } = await supabaseClient.functions.invoke(`get-ministry-members?ministry_id=${ministryId}`);
             if (error) throw error;
-
             document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
             document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
             document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
             document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
-            
             buildManagementTable(data.volunteers);
             buildAptitudeChart(data.charts.aptitudeDistribution);
             buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
-            
             document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
-        } catch (error) {
+        } catch (error) { 
             const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`;
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`; 
         }
     }
 
@@ -511,6 +425,25 @@ ${error.message}</p>`;
         });
     }
 
+    async function updateLeaderScore(memberMinistryId, newScoreString) {
+        const newScore = parseFloat(newScoreString);
+        if (isNaN(newScore) || newScore < 0 || newScore > 10) { showToast('Nota inválida.', 'error'); return; }
+        
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'flex';
+
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('update-leader-score', { body: { memberMinistryId, newScore } });
+            if (error) throw error;
+            showToast(data.message || 'Nota atualizada!', 'success');
+            await fetchAndBuildDashboard(currentMinistryId);
+        } catch (error) { 
+            showToast(`Erro: ${error.context?.json?.error || error.message}`, 'error'); 
+        } finally {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `feedback-toast ${type}`;
@@ -521,7 +454,7 @@ ${error.message}</p>`;
     }
 
     document.addEventListener('DOMContentLoaded', checkAuth);
-
 </script>
+
 </body>
 </html>
