@@ -187,7 +187,7 @@
         </div>
     </div>
 <script>
-    const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
+     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
@@ -195,7 +195,7 @@
     let aptitudeChart = null, monthlyLoadChart = null, currentMinistryId = null;
     let allVolunteersData = [];
     let currentSort = { column: 'full_name', direction: 'asc' };
-    let ministryRoles = []; // Armazena as funções possíveis do ministério
+    let ministryRoles = [];
 
     function groupVolunteers(flatList) {
         const grouped = {};
@@ -225,7 +225,6 @@
         if (volunteers) {
             allVolunteersData = groupVolunteers(volunteers);
         }
-
         const sortedVolunteers = [...allVolunteersData].sort((a, b) => {
             const col = currentSort.column;
             const dir = currentSort.direction === 'asc' ? 1 : -1;
@@ -235,7 +234,6 @@
                 return (Number(a[col]) - Number(b[col])) * dir;
             }
         });
-
         if (sortedVolunteers.length === 0) {
             managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
             return;
@@ -262,7 +260,6 @@
             `;
         });
         managementBody.innerHTML = rowsHTML;
-
         document.querySelectorAll('.sortable-header').forEach(header => {
             header.classList.remove('sort-asc', 'sort-desc');
         });
@@ -294,14 +291,11 @@
     function openVolunteerModal(memberId) {
         const volunteer = allVolunteersData.find(v => v.member_id === memberId);
         if (!volunteer) return;
-
         const modal = document.getElementById('volunteer-modal');
         const modalBody = document.getElementById('modal-body');
-        
         const assignedRoles = volunteer.roles.map(r => r.role);
         const availableRoles = ministryRoles.filter(r => !assignedRoles.includes(r));
         const roleOptions = availableRoles.map(r => `<option value="${r}">${r}</option>`).join('');
-
         let rolesHTML = '';
         volunteer.roles.forEach(role => {
             const levelClass = (role.aptitude_level || 'N/A').replace(/\s+/g, '-').toLowerCase();
@@ -315,7 +309,6 @@
                 </tr>
             `;
         });
-
         modalBody.innerHTML = `
             <div class="modal-profile-header">
                 <img src="${volunteer.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${volunteer.full_name}" class="modal-profile-pic">
@@ -337,7 +330,6 @@
                 <button class="button" style="background-color: var(--success-color);" onclick="addRoleToTable()" ${availableRoles.length === 0 ? 'disabled' : ''}>Adicionar</button>
             </div>
         `;
-        
         document.getElementById('save-changes-btn').onclick = () => saveAllChanges(memberId, volunteer.roles);
         modal.style.display = 'flex';
     }
@@ -346,7 +338,6 @@
         const select = document.getElementById('new-role-select');
         const roleName = select.value;
         if (!roleName) return;
-
         const tableBody = document.querySelector('#roles-table tbody');
         const newRow = tableBody.insertRow();
         newRow.dataset.isNew = "true";
@@ -357,7 +348,6 @@
             <td><input type="number" class="score-input" style="width: 60px; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" value="5.0"></td>
             <td><button class="delete-role-btn" onclick="this.closest('tr').remove()">&times;</button></td>
         `;
-        
         select.remove(select.selectedIndex);
         if (select.options.length === 0) {
             select.nextElementSibling.disabled = true;
@@ -367,20 +357,16 @@
     async function saveAllChanges(memberId, originalRoles) {
         const loadingOverlay = document.getElementById('loading-overlay');
         loadingOverlay.style.display = 'flex';
-
         const promises = [];
         const currentRoleIds = new Set();
-
-        // Processar atualizações e novas funções
         document.querySelectorAll('#roles-table tbody tr').forEach(row => {
             const roleName = row.cells[0].textContent;
             const newScore = parseFloat(row.querySelector('.score-input').value);
-            
-            if (row.dataset.isNew === "true") { // Adicionar nova função
+            if (row.dataset.isNew === "true") {
                 promises.push(supabaseClient.functions.invoke('add-volunteer-role', {
                     body: { member_id: memberId, ministry_id: currentMinistryId, role_name: roleName }
                 }));
-            } else { // Atualizar nota existente
+            } else {
                 const memberMinistryId = row.dataset.memberMinistryId;
                 currentRoleIds.add(memberMinistryId);
                 const originalRole = originalRoles.find(r => r.member_ministry_id === memberMinistryId);
@@ -391,8 +377,6 @@
                 }
             }
         });
-
-        // Processar exclusões
         originalRoles.forEach(originalRole => {
             if (!currentRoleIds.has(originalRole.member_ministry_id)) {
                 promises.push(supabaseClient.functions.invoke('remove-volunteer-role', {
@@ -400,7 +384,6 @@
                 }));
             }
         });
-
         try {
             await Promise.all(promises);
             showToast('Alterações salvas com sucesso!', 'success');
@@ -409,7 +392,7 @@
             showToast(`Erro ao salvar: ${error.message}`, 'error');
         } finally {
             closeVolunteerModal();
-            await checkAuth(); // Recarrega todo o dashboard
+            await checkAuth();
             loadingOverlay.style.display = 'none';
         }
     }
@@ -419,66 +402,75 @@
         modal.style.display = 'none';
     }
 
-// SUBSTITUA A FUNÇÃO checkAuth PELA VERSÃO ABAIXO
+    async function checkAuth() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainContent = document.getElementById('main-content');
+        loadingOverlay.style.display = 'flex';
+        mainContent.style.display = 'none';
 
-async function checkAuth() {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const mainContent = document.getElementById('main-content');
-    
-    loadingOverlay.style.display = 'flex';
-    mainContent.style.display = 'none';
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = '/login';
+                return;
+            }
 
-    try {
-        // 1. Verifica se o usuário está logado (igual à página que funciona)
-        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!session) {
-            window.location.href = '/login';
-            return;
-        }
-        
-        // 2. Chama DIRETAMENTE a Edge Function principal do Dashboard.
-        // A função no back-end deve ser responsável por identificar o líder e seu ministério.
-        const { data, error } = await supabaseClient.functions.invoke('get-ministry-members');
-        
-        if (error) {
-            // Se a Edge Function retornar um erro (ex: "Usuário não é líder"), ele será capturado aqui.
-            throw new Error(error.message);
-        }
+            const { data: memberProfile, error: memberError } = await supabaseClient
+                .from('members')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .single();
+            if (memberError || !memberProfile) throw new Error("Seu usuário não está associado a um perfil de membro.");
 
-        // 3. Preenche os dados e mostra o conteúdo (se tudo deu certo)
-        document.getElementById('ministry-name-title').textContent = `Dashboard: ${data.ministryName}`; // Supondo que a função retorne o nome do ministério
-        currentMinistryId = data.ministryId; // Supondo que a função retorne o ID
-        ministryRoles = data.ministryRoles || []; // Supondo que a função retorne as funções
+            const { data: ministryLeadership, error: leaderError } = await supabaseClient
+                .from('member_ministries')
+                .select('ministries(id, name, roles)')
+                .eq('member_id', memberProfile.id)
+                .eq('is_leader', true)
+                .single();
+            if (leaderError || !ministryLeadership) throw new Error("Você não está designado como líder de nenhum ministério.");
+            
+            const ministry = ministryLeadership.ministries;
+            currentMinistryId = ministry.id;
+            ministryRoles = ministry.roles || [];
+            
+            document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministry.name}`;
+            
+            await fetchAndBuildDashboard(currentMinistryId);
+            
+            mainContent.style.display = 'block';
 
-        document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
-        document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
-        document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
-        document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
-        
-        buildManagementTable(data.volunteers);
-        buildAptitudeChart(data.charts.aptitudeDistribution);
-        buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
-        
-        document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
-
-        // 4. Mostra o conteúdo principal APENAS após tudo estar pronto
-        mainContent.style.display = 'block';
-
-    } catch (error) { 
-        // Qualquer erro (sessão, permissão da Edge Function, etc.) será exibido aqui.
-        mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center; font-size: 1.2rem;"><b>Erro ao carregar o Dashboard:</b>  
+        } catch (error) { 
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center; font-size: 1.2rem;"><b>Erro de Acesso:</b>  
 ${error.message}</p>`;
-        mainContent.style.display = 'block';
-    } finally {
-        loadingOverlay.style.display = 'none';
+            mainContent.style.display = 'block';
+        } finally {
+            loadingOverlay.style.display = 'none';
+        }
     }
-}
 
-// ATENÇÃO: A função fetchAndBuildDashboard não é mais necessária,
-// pois sua lógica foi movida para dentro do try de checkAuth.
-// Você pode APAGAR a função fetchAndBuildDashboard do seu código.
+    async function fetchAndBuildDashboard(ministryId) {
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('get-ministry-members', {
+                body: { ministry_id: ministryId }
+            });
+            if (error) throw error;
 
+            document.getElementById('kpi-total-volunteers').textContent = data.kpis.totalVolunteers;
+            document.getElementById('kpi-average-score').textContent = data.kpis.averageScore;
+            document.getElementById('kpi-unavailable-count').textContent = data.kpis.unavailableCount;
+            document.getElementById('kpi-next-event').textContent = data.kpis.nextEventDate;
+            
+            buildManagementTable(data.volunteers);
+            buildAptitudeChart(data.charts.aptitudeDistribution);
+            buildMonthlyLoadChart(data.charts.monthlyLoadDistribution);
+            
+            document.getElementById('volunteer-search').addEventListener('input', filterTableByName);
+        } catch (error) {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Falha ao carregar dados do dashboard: ${error.message}</p>`;
+        }
+    }
 
     function buildAptitudeChart(distributionData) {
         const ctx = document.getElementById('aptitude-chart').getContext('2d');
@@ -529,6 +521,7 @@ ${error.message}</p>`;
     }
 
     document.addEventListener('DOMContentLoaded', checkAuth);
+
 </script>
 </body>
 </html>
