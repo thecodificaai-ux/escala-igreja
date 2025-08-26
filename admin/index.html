@@ -17,32 +17,20 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--secondary-color); color: var(--text-primary); margin: 0; padding: 2rem; }
 
-        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO (ADICIONADO) --- */
+        /* --- ESTILOS DO SPINNER E OVERLAY DE CARREGAMENTO --- */
         .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(243, 244, 246, 0.8); /* Cor de fundo do body com transparência */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(243, 244, 246, 0.8); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
         }
         .spinner {
-            width: 56px;
-            height: 56px;
-            border: 7px solid var(--border-color);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
+            width: 56px; height: 56px; border: 7px solid var(--border-color);
+            border-top-color: var(--primary-color); border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        /* --- FIM DOS ESTILOS DO SPINNER --- */
-
+        
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         h1 { color: var(--text-primary); font-weight: 700; font-size: 2.25rem; margin: 0; }
@@ -58,6 +46,21 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 1rem 1.5rem; text-align: left; vertical-align: middle; white-space: nowrap; }
         th { border-bottom: 2px solid var(--border-color); }
+        
+        /* --- ESTILOS PARA TABELA ORDENÁVEL (ADICIONADO) --- */
+        .sortable-header {
+            cursor: pointer; position: relative; user-select: none; 
+            background-color: var(--primary-color); color: white;
+        }
+        .sortable-header:hover { background-color: var(--primary-dark); }
+        .sortable-header::after {
+            content: ''; position: absolute; right: 1rem; top: 50%;
+            transform: translateY(-50%); border: 4px solid transparent; opacity: 0.5;
+        }
+        .sortable-header.sort-asc::after { border-bottom-color: white; opacity: 1; }
+        .sortable-header.sort-desc::after { border-top-color: white; opacity: 1; }
+        /* --- FIM DOS ESTILOS PARA TABELA ORDENÁVEL --- */
+
         .volunteer-info { display: flex; align-items: center; gap: 1rem; }
         .volunteer-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .aptitude-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
@@ -91,12 +94,10 @@
     </style>
 </head>
 <body>
-    <!-- OVERLAY DE CARREGAMENTO (ADICIONADO) -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="spinner"></div>
     </div>
 
-    <!-- O antigo 'loading-container' foi removido, pois o overlay o substitui -->
     <div id="main-content" class="container" style="display: none;">
         <div class="header">
             <h1 id="ministry-name-title">Dashboard do Líder</h1>
@@ -120,10 +121,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Voluntário</th>
-                        <th>Funções</th>
-                        <th>Escalado (Mês)</th>
-                        <th>Nota Média</th>
+                        <!-- CABEÇALHOS ATUALIZADOS COM ONCLICK -->
+                        <th class="sortable-header" onclick="sortTable('full_name')">Voluntário</th>
+                        <th class="sortable-header" onclick="sortTable('total_roles')">Funções</th>
+                        <th class="sortable-header" onclick="sortTable('total_schedules_month')">Escalado (Mês)</th>
+                        <th class="sortable-header" onclick="sortTable('average_score')">Nota Média</th>
                     </tr>
                 </thead>
                 <tbody id="management-body"></tbody>
@@ -135,10 +137,12 @@
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnZjbXRvZHNtbHZranp0cnJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MzIxNTEsImV4cCI6MjA3MTIwODE1MX0.35Wwu08tbJGCuakFAro9f4pPNcdSbbppkj_GIC4aW1k';
     const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY  );
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY );
+    
     let aptitudeChart = null, monthlyLoadChart = null, currentMinistryId = null;
+    let allVolunteersData = []; // Armazena todos os voluntários para reordenar
+    let currentSort = { column: 'full_name', direction: 'asc' }; // Estado inicial da ordenação
 
-    // Todas as suas funções de lógica e renderização permanecem intactas
     function groupVolunteers(flatList) {
         const grouped = {};
         flatList.forEach(item => {
@@ -164,13 +168,26 @@
 
     function buildManagementTable(volunteers) {
         const managementBody = document.getElementById('management-body');
-        const groupedVolunteers = groupVolunteers(volunteers);
-        if (groupedVolunteers.length === 0) {
+        if (volunteers) {
+            allVolunteersData = groupVolunteers(volunteers);
+        }
+
+        const sortedVolunteers = [...allVolunteersData].sort((a, b) => {
+            const col = currentSort.column;
+            const dir = currentSort.direction === 'asc' ? 1 : -1;
+            if (col === 'full_name') {
+                return a.full_name.localeCompare(b.full_name) * dir;
+            } else {
+                return (Number(a[col]) - Number(b[col])) * dir;
+            }
+        });
+
+        if (sortedVolunteers.length === 0) {
             managementBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Nenhum voluntário encontrado.</td></tr>';
             return;
         }
         let rowsHTML = '';
-        groupedVolunteers.forEach(v => {
+        sortedVolunteers.forEach(v => {
             rowsHTML += `
                 <tr class="parent-row" onclick="toggleChildren(this, '${v.member_id}')">
                     <td>
@@ -178,19 +195,14 @@
                             <img src="${v.photo_url || 'https://yrnvcmtodsmlvkjztrrr.supabase.co/storage/v1/object/public/fotos-perfil/default-avatar-profile.jpg'}" alt="${v.full_name}" class="volunteer-pic">
                             <div>
                                 <div>${v.full_name} ${v.is_unavailable_next_30_days ? '<span class="warning-icon" title="Indisponível nos próximos 30 dias">⚠️</span>' : ''}</div>
-                                <div style="color: var(--text-secondary  ); font-size: 0.85rem;">${v.display_name || ''}</div>
+                                <div style="color: var(--text-secondary ); font-size: 0.85rem;">${v.display_name || ''}</div>
                             </div>
                         </div>
                     </td>
                     <td style="text-align: center; font-weight: 600;">${v.total_roles}</td>
                     <td style="text-align: center; font-weight: 600;">${v.total_schedules_month}</td>
                     <td>
-                        <input 
-                            type="number" 
-                            style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" 
-                            value="${v.average_score}" 
-                            readonly
-                        >
+                        <input type="number" style="width: 60px; background-color: #f3f4f6; border: 1px solid var(--border-color); text-align: center; padding: 0.5rem; border-radius: 6px;" value="${v.average_score}" readonly>
                     </td>
                 </tr>
             `;
@@ -207,6 +219,24 @@
             });
         });
         managementBody.innerHTML = rowsHTML;
+
+        document.querySelectorAll('.sortable-header').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+        });
+        const activeHeader = document.querySelector(`.sortable-header[onclick="sortTable('${currentSort.column}')"]`);
+        if (activeHeader) {
+            activeHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+    }
+
+    function sortTable(columnName) {
+        if (currentSort.column === columnName) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.column = columnName;
+            currentSort.direction = 'asc';
+        }
+        buildManagementTable(null);
     }
 
     function toggleChildren(parentRow, memberId) {
@@ -216,10 +246,9 @@
     }
 
     async function checkAuth() {
-        // --- MUDANÇAS AQUI ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const mainContent = document.getElementById('main-content');
-        loadingOverlay.style.display = 'flex'; // 1. Mostra o spinner
+        loadingOverlay.style.display = 'flex';
         mainContent.style.display = 'none';
 
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -231,14 +260,14 @@
             if (!ministryData) throw new Error("Você não está designado como líder de nenhum ministério.");
             currentMinistryId = ministryData.id;
             
-            mainContent.style.display = 'block'; // Mostra o conteúdo principal antes de popular
+            mainContent.style.display = 'block';
             document.getElementById('ministry-name-title').textContent = `Dashboard: ${ministryData.name}`;
-            await fetchAndBuildDashboard(currentMinistryId); // Espera o dashboard ser construído
+            await fetchAndBuildDashboard(currentMinistryId);
         } catch (error) { 
             mainContent.innerHTML = `<p style="color: red; padding: 2rem; text-align: center;">Erro: ${error.message}</p>`;
             mainContent.style.display = 'block';
         } finally {
-            loadingOverlay.style.display = 'none'; // 2. Esconde o spinner no final
+            loadingOverlay.style.display = 'none';
         }
     }
 
@@ -268,67 +297,40 @@
         });
     }
 
-// SUBSTITUA A FUNÇÃO buildMonthlyLoadChart PELA VERSÃO CORRIGIDA ABAIXO
-
-function buildMonthlyLoadChart(distributionData) {
-    const ctx = document.getElementById('monthly-load-chart').getContext('2d');
-    if (monthlyLoadChart) monthlyLoadChart.destroy();
-
-    // 1. Define a ordem lógica desejada para as barras
-    const logicalOrder = ['Nenhuma', '1-2 vezes', '3-4 vezes', '5+ vezes'];
-
-    // 2. Prepara os rótulos e os dados na ordem correta
-    const orderedLabels = [];
-    const orderedData = [];
-
-    logicalOrder.forEach(label => {
-        // Verifica se a categoria existe nos dados recebidos
-        if (distributionData.hasOwnProperty(label)) {
-            orderedLabels.push(label);
-            orderedData.push(distributionData[label]);
-        }
-    });
-
-    monthlyLoadChart = new Chart(ctx, {
-        type: 'bar', 
-        data: { 
-            // 3. Usa os dados ordenados para construir o gráfico
-            labels: orderedLabels, 
-            datasets: [{ 
-                label: 'Nº de Voluntários', 
-                data: orderedData, 
-                backgroundColor: ['#6b7280', '#a5b4fc', '#f59e0b', '#ef4444'], 
-                borderColor: '#ffffff', 
-                borderWidth: 2, 
-                borderRadius: 5 
-            }] 
-        },
-        options: { 
-            indexAxis: 'y', 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-                legend: { display: false } 
-            }, 
-            scales: { 
-                x: { 
-                    ticks: { stepSize: 1 } 
-                },
-                // 4. Adiciona a opção para inverter a ordem do eixo Y
-                y: {
-                    reverse: true
-                }
-            } 
-        }
-    });
-}
-
+    function buildMonthlyLoadChart(distributionData) {
+        const ctx = document.getElementById('monthly-load-chart').getContext('2d');
+        if (monthlyLoadChart) monthlyLoadChart.destroy();
+        const logicalOrder = ['Nenhuma', '1-2 vezes', '3-4 vezes', '5+ vezes'];
+        const orderedLabels = [];
+        const orderedData = [];
+        logicalOrder.forEach(label => {
+            if (distributionData.hasOwnProperty(label)) {
+                orderedLabels.push(label);
+                orderedData.push(distributionData[label]);
+            }
+        });
+        monthlyLoadChart = new Chart(ctx, {
+            type: 'bar', 
+            data: { 
+                labels: orderedLabels, 
+                datasets: [{ 
+                    label: 'Nº de Voluntários', data: orderedData, 
+                    backgroundColor: ['#6b7280', '#a5b4fc', '#f59e0b', '#ef4444'], 
+                    borderColor: '#ffffff', borderWidth: 2, borderRadius: 5 
+                }] 
+            },
+            options: { 
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { ticks: { stepSize: 1 } }, y: { reverse: true } } 
+            }
+        });
+    }
 
     async function updateLeaderScore(memberMinistryId, newScoreString) {
         const newScore = parseFloat(newScoreString);
         if (isNaN(newScore) || newScore < 0 || newScore > 10) { showToast('Nota inválida.', 'error'); return; }
         
-        // Mostra o spinner durante a atualização
         const loadingOverlay = document.getElementById('loading-overlay');
         loadingOverlay.style.display = 'flex';
 
@@ -336,11 +338,11 @@ function buildMonthlyLoadChart(distributionData) {
             const { data, error } = await supabaseClient.functions.invoke('update-leader-score', { body: { memberMinistryId, newScore } });
             if (error) throw error;
             showToast(data.message || 'Nota atualizada!', 'success');
-            await fetchAndBuildDashboard(currentMinistryId); // Recarrega os dados
+            await fetchAndBuildDashboard(currentMinistryId);
         } catch (error) { 
             showToast(`Erro: ${error.context?.json?.error || error.message}`, 'error'); 
         } finally {
-            loadingOverlay.style.display = 'none'; // Esconde o spinner
+            loadingOverlay.style.display = 'none';
         }
     }
 
@@ -357,3 +359,4 @@ function buildMonthlyLoadChart(distributionData) {
 </script>
 
 </body>
+</html>
