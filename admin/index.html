@@ -116,9 +116,19 @@
             <div class="widget"><h2 class="widget-title">Níveis de Aptidão do Time</h2><div class="widget-chart"><canvas id="aptitude-chart"></canvas></div></div>
             <div class="widget"><h2 class="widget-title">Carga de Trabalho (Mês Atual)</h2><div class="widget-chart"><canvas id="monthly-load-chart"></canvas></div></div>
         </div>
-        <div class="table-wrapper">
-            <h2 class="widget-title" style="padding: 1.5rem 1.5rem 0;">Gerenciamento de Voluntários</h2>
-            <table>
+       <!-- Encontre este div... -->
+<div class="table-wrapper">
+    
+    <!-- ...e adicione este novo container de busca logo abaixo do título -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem;">
+        <h2 class="widget-title" style="padding: 1.5rem 0;">Gerenciamento de Voluntários</h2>
+        <div class="search-container">
+            <input type="text" id="volunteer-search" placeholder="Buscar voluntário..." 
+                   style="padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); width: 250px;">
+        </div>
+    </div>
+
+    <table>
                 <thead>
                     <tr>
                         <!-- CABEÇALHOS ATUALIZADOS COM ONCLICK -->
@@ -127,11 +137,17 @@
                         <th class="sortable-header" onclick="sortTable('total_schedules_month')">Escalado (Mês)</th>
                         <th class="sortable-header" onclick="sortTable('average_score')">Nota Média</th>
                     </tr>
-                </thead>
-                <tbody id="management-body"></tbody>
-            </table>
-        </div>
-    </div>
+                <thead>
+            <tr>
+                <th class="sortable-header" onclick="sortTable('full_name')">Voluntário</th>
+                <th class="sortable-header" onclick="sortTable('total_roles')">Funções</th>
+                <th class="sortable-header" onclick="sortTable('total_schedules_month')">Escalado (Mês)</th>
+                <th class="sortable-header" onclick="sortTable('average_score')">Nota Média</th>
+            </tr>
+        </thead>
+        <tbody id="management-body"></tbody>
+    </table>
+</div>
     
   <script>
     const SUPABASE_URL = 'https://yrnvcmtodsmlvkjztrrr.supabase.co'; 
